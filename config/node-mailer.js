@@ -1,4 +1,6 @@
-export const getOtpTemplate = (otp) => `
+import nodemailer from "nodemailer";
+
+export const getOtpTemplate = (token) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -12,13 +14,18 @@ export const getOtpTemplate = (otp) => `
         <table width="450" cellpadding="0" cellspacing="0" style="border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); padding: 30px;">
           <tr>
             <td align="center" style="padding: 0 20px;">
-              <img style="height:50px; width:140px" src="https://www.pinpng.com/pngs/m/229-2297093_bos-vs-orl-dream11-nba-team-prediction-fantasy.png" alt="Dream11 Banner" width="100%" style="border-radius: 10px 10px 0 0; margin-bottom: 20px;" />
+              <img style="height:50px; width:140px" src="https://www.pinpng.com/pngs/m/229-2297093_bos-vs-orl-dream11-nba-team-prediction-fantasy.png" alt="Dream11 Banner" width="100%" />
               <h2 style="color: red; margin-bottom: 10px;">Welcome to Dream11</h2>
-              <p style="font-size: 15px; color: #333;">Thanks for registering. Use the OTP below to verify your email address:</p>
-              <div style="background-color:white; padding: 15px 30px; margin: 20px 0; border-radius: 6px; font-size: 28px; font-weight: 600; color:red; letter-spacing: 5px; display: inline-block;">
-                ${otp}
-              </div>
-              <p style="font-size: 15px; color: #444;">This code is valid for 5 minutes. Do not share it with anyone.</p>
+              <p style="font-size: 15px; color: #333;">Thanks for registering. Please click the link below to verify your email address:</p>
+              
+              <p style="margin: 20px 0;">
+                <a  href="http://157.245.93.63:3434/reset/password/${token}" 
+                   style="font-size: 16px; color: blue; text-decoration: underline;">
+                  Click here to forgot password
+                </a>
+              </p>
+
+              <p style="font-size: 14px; color: #555;">This link is valid for 5 minutes. Do not share it with anyone.</p>
               <p style="font-size: 13px; color: #999; margin-top: 40px;">
                 &copy; 2025 Dream11 Clone. All rights reserved.<br />
                 If you did not register, please ignore this email.
@@ -31,7 +38,6 @@ export const getOtpTemplate = (otp) => `
   </table>
 </body>
 </html>
-
 `;
 
 export const sendEmail = async (toEmail, subject, html) => {
@@ -40,14 +46,14 @@ export const sendEmail = async (toEmail, subject, html) => {
     port: 587,
     secure: false,
     auth: {
-      //  user: "nilesh.asservices@gmail.com",
-      //  pass: "awjg ybze lkuy hvzt",
+      user: "nilesh.asservices@gmail.com",
+      pass: "awjg ybze lkuy hvzt",
     },
   });
 
   try {
     const info = await transporter.sendMail({
-      //  from: '"Dream11" <nilesh.asservices@gmail.com>',
+      from: '"Africa" <nilesh.asservices@gmail.com>',
       to: toEmail,
       subject: subject,
       html: html,
