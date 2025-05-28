@@ -1,22 +1,28 @@
 import express from "express";
 
-import { UserController } from "../controllers/__init__.js";
+import { UserController, ContactController } from "../controllers/__init__.js";
 
 import JWT from "jsonwebtoken";
 import Users from "../models/UserModel.js";
 import { createResponse } from "../config/common.js";
 import upload from "../config/uploadFile.js";
-const Router = express.Router();
 
+const Router = express.Router();
+// users
 Router.post("/user/register", UserController.userRegister);
 Router.post("/user/login", UserController.userLogin);
-Router.post("/user/reset/password", UserController.userPasswordUpdate);
+Router.post("/user/password/update", UserController.userPasswordUpdate);
 Router.post(
   "/user/profile/update",
   _auth,
   upload.none(),
   UserController.userProfileUpdate
 );
+Router.post("/user/forgot/password", UserController.userForgotPassword);
+Router.post("/user/reset/password", UserController.userResetPassword);
+
+// contact
+Router.post("/contact", ContactController.addContact);
 
 
 
