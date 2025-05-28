@@ -3,7 +3,7 @@ import express from "express";
 import { UserController } from "../controllers/__init__.js";
 
 import JWT from "jsonwebtoken";
-import Users from "../models/UserSequelize.js";
+import Users from "../models/UserModel.js";
 import { createResponse } from "../config/common.js";
 import upload from "../config/uploadFile.js";
 const Router = express.Router();

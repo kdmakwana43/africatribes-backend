@@ -4,7 +4,7 @@ import {
   createResponse,
   hasPassword,
 } from "../config/common.js";
-import Users from "../models/UserSequelize.js";
+import Users from "../models/UserModel.js";
 import JWT from "jsonwebtoken";
 
 export const userRegister = async (req, res) => {
