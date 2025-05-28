@@ -3,9 +3,12 @@ import {
   compressPassword,
   createResponse,
   hasPassword,
+  authResponse
 } from "../config/common.js";
 import Users from "../models/UserModel.js";
 import JWT from "jsonwebtoken";
+import { Op } from 'sequelize';
+
 
 export const userRegister = async (req, res) => {
   try {
@@ -78,7 +81,7 @@ export const userLogin = async (req, res) => {
       throw new Error("Invalid password! Please check your password.");
     }
 
-    const token = JWT.sign({ id: user._id }, process.env.JWT_SECRET);
+    const token = JWT.sign({ id: user.id }, process.env.JWT_SECRET);
 
     const userResponse = {
       ...user.toJSON(),
@@ -95,38 +98,45 @@ export const userLogin = async (req, res) => {
 
 export const userProfileUpdate = async (req, res) => {
   try {
-    validation(["first_name", "last_name", "dob", "gender", "id"], req.body);
 
-    console.log("req", req.body);
-    console.log("req.file", req.file);
+    console.log(req.body, req.body);
 
     const condition = {
-      id: req.body.id,
+      id: req.Auth.id,
     };
 
-    const user = await Users.findOne({ where: { condition } });
+    const user =  await Users.findOne({ where: condition });
+    console.log('req.body',req.body)
+    
+    if (req.body.email) {
 
-    if (!user) {
-      throw new Error("User not found");
+      console.log(req.body.email, "email");
+
+      const emailCondition = {
+        email: req.body.email,
+        id: {
+          [Op.ne]: req.Auth.id,
+        }
+      };
+
+      const isExist =  await Users.findOne({ where: emailCondition });
+      if (isExist) {
+        throw new Error(`This User is already associated with ${req.body.email}`);
+      }
+
     }
 
-    user.first_name = req.body.first_name;
-    user.last_name = req.body.last_name;
-    user.dob = req.body.dob;
-    user.gender = req.body.gender;
-    user.country = req.body.country || null;
-    user.hometown = req.body.hometown || null;
-    user.tribe = req.body.tribe || null;
-    user.village = req.body.village || null;
+    const NOT_ALLOW_UPDATE = ["id", "__v", "createdAt", "updatedAt", "password", "status"];
 
-    user.alias = req.body.alias || null;
-    if (req.file) {
-      user.profile = req.body.req.file.filename;
-    } else {
-      user.profile = null;
-    }
+    // Update fields
+    Object.keys(req.body).forEach((key) => {
+      if (NOT_ALLOW_UPDATE.indexOf(key) == -1) {
+        user[key] = req.body[key];
+      }
+    });
+
     await user.save();
-    createResponse(res, "Profile update successfully.");
+    createResponse(res, authResponse(user.toJSON()));
   } catch (error) {
     createResponse(res, error.message, 500);
     console.log(error.message, "error");

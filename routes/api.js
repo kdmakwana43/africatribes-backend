@@ -13,7 +13,8 @@ Router.post("/user/login", UserController.userLogin);
 Router.post("/user/reset/password", UserController.userPasswordUpdate);
 Router.post(
   "/user/profile/update",
-  upload.single("profile"),
+  _auth,
+  upload.none(),
   UserController.userProfileUpdate
 );
 
@@ -22,36 +23,20 @@ Router.post(
 async function _auth(req, res, next) {
   try {
     const token = req.headers["authorization"];
-
-    console.log("====================================");
-    console.log("token", token);
-    console.log("====================================");
     if (!token) {
       throw new Error("Unauthorized access");
     }
 
-    //     const decode = JWT.decode(token);
     const decode = JWT.verify(token, process.env.JWT_SECRET);
-    console.log("decode", decode);
     if (!decode) {
       throw new Error("Invalid Token");
     }
-
     const userId = decode.id;
-
-    console.log("====================================");
-    console.log("userId", userId);
-    console.log("====================================");
-
     const user = await Users.findByPk(userId);
     if (!user) {
       throw new Error("User not found");
     }
-
-    console.log("====================================");
-    console.log("user", user);
-    console.log("====================================");
-    req.Auth = user;
+    req.Auth = user.toJSON();
     next();
   } catch (error) {
     createResponse(res, error.message, 500);
