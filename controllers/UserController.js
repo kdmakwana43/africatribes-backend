@@ -4,24 +4,11 @@ import {
   createResponse,
   hasPassword,
 } from "../config/common.js";
-import Users from "../modals/user-sequelize.js";
+import Users from "../models/user-sequelize.js";
 import JWT from "jsonwebtoken";
 
 export const userRegister = async (req, res) => {
   try {
-    const {
-      first_name,
-      last_name,
-      email,
-      password,
-      dob,
-      gender,
-      country,
-      hometown,
-      tribe,
-      village,
-    } = req.body;
-
     validation(
       [
         "first_name",
@@ -35,36 +22,35 @@ export const userRegister = async (req, res) => {
       req.body
     );
 
-    console.log("req.body", req.body);
-
     const condition = {
-      email: email,
+      email: req.body.email.toLowerCase(),
     };
 
-    const alredayEmail = await Users.findOne({ where: condition });
+    const isExistUser = await Users.findOne({ where: condition });
 
-    if (alredayEmail) {
-      throw new Error(`Email is already exists! ${email}`);
+    if (isExistUser) {
+      throw new Error(`${req.body.email} is already registered! Please try another email.`);
     }
 
-    const hasPass = await hasPassword(password, 10);
+    const hasPass = hasPassword(req.body.password, 10);
 
     const payload = {
-      first_name,
-      last_name,
-      email: email.toLowerCase(),
+      first_name : req.body.first_name,
+      last_name : req.body.last_name,
+      email: req.body.email.toLowerCase(),
       password: hasPass,
-      dob,
-      gender,
-      country,
-      hometown,
-      tribe,
-      village,
+      dob : req.body.dob,
+      gender : req.body.gender,
+      country : req.body.country,
+      hometown : req.body.hometown || null,
+      tribe : req.body.tribe || null,
+      village : req.body.village || null,
     };
 
-    const regiaterUser = await Users.create(payload);
+    const createdUser = await Users.create(payload);
 
-    createResponse(res, regiaterUser);
+
+    createResponse(res, 'User registered successfully.');
   } catch (error) {
     createResponse(res, error.message, 500);
     console.log(error.message, "error");
@@ -87,7 +73,7 @@ export const userLogin = async (req, res) => {
       throw new Error(`Email is not exit! Please check your Number.`);
     }
 
-    const isPasswordValid = await compressPassword(password, user.password);
+    const isPasswordValid = compressPassword(req.body.password, user.password);
 
     if (!isPasswordValid) {
       throw new Error("Invalid password! Please check your password.");

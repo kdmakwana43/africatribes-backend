@@ -8,11 +8,11 @@ export const createResponse = (res, data, code = 200) => {
   });
 };
 
-export const hasPassword = async (password) => {
-  return await bcrypt.hashSync(password, 10);
+export const hasPassword = (password) => {
+  return bcrypt.hashSync(password, 10);
 };
-export const compressPassword = async (password, oldPassword) => {
-  return await bcrypt.compareSync(password, oldPassword);
+export const compressPassword = (password, oldPassword) => {
+  return bcrypt.compareSync(password, oldPassword);
 };
 
 // export const validation = (fields, data) => {

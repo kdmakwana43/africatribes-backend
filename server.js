@@ -19,12 +19,6 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/v1", Router);
 
-// sequelize.sync({ alter: true }).then(() => {
-//   console.log("Database synced successfully!");
-// });
-
-// sequelize.sync({ alter: true });
-
 app.listen(PORT, "0.0.0.0", async () => {
   console.log(`Server is running on port ${PORT}`);
   ConnectDb();
