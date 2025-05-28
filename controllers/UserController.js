@@ -167,3 +167,16 @@ export const userPasswordUpdate = async (req, res) => {
     console.log(error.message, "error");
   }
 };
+
+
+export const uploadFile = async (req, res) => {
+  try {
+    if (req.file) {
+      createResponse(res, process.env.BASE_URL + "/images/" + req.file.filename, 200);
+    } else {
+      throw new Error("Oops! Failed to upload File or image.");
+    }
+  } catch (error) {
+    // __._throwError(res, error);
+  }
+};

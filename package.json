@@ -1,6 +1,12 @@
 {
   "type": "module",
   "dependencies": {
+    "@adminjs/design-system": "^4.1.1",
+    "@adminjs/express": "^6.1.1",
+    "@adminjs/sequelize": "^4.1.1",
+    "@adminjs/upload": "^4.0.2",
+    "adminjs": "^7.8.16",
+    "axios": "^1.9.0",
     "bcryptjs": "^3.0.2",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
@@ -11,6 +17,7 @@
     "mysql2": "^3.14.1",
     "nodemailer": "^7.0.3",
     "nodemon": "^3.1.10",
+    "react-dropzone": "^14.3.8",
     "sequelize": "^6.37.7"
   },
   "scripts": {

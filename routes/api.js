@@ -18,6 +18,10 @@ Router.post(
   UserController.userProfileUpdate
 );
 
+
+
+Router.post("/upload-file", upload.single("file"), UserController.uploadFile);
+
 // middleware
 
 async function _auth(req, res, next) {

@@ -1,9 +1,9 @@
 {
   "development": {
-    "username": "root",
-    "password": "root@LocalPass123",
-    "database": "db_africatribes_20_05_V1",
-    "host": "localhost",
+    "username": "sql12781756",
+    "password": "7ZQgfQmdB6",
+    "database": "sql12781756",
+    "host": "sql12.freesqldatabase.com",
     "dialect": "mysql"
   },
   "test": {
