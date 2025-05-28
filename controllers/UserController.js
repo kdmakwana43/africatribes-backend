@@ -4,7 +4,7 @@ import {
   createResponse,
   hasPassword,
 } from "../config/common.js";
-import Users from "../models/user-sequelize.js";
+import Users from "../models/UserSequelize.js";
 import JWT from "jsonwebtoken";
 
 export const userRegister = async (req, res) => {
@@ -29,28 +29,29 @@ export const userRegister = async (req, res) => {
     const isExistUser = await Users.findOne({ where: condition });
 
     if (isExistUser) {
-      throw new Error(`${req.body.email} is already registered! Please try another email.`);
+      throw new Error(
+        `${req.body.email} is already registered! Please try another email.`
+      );
     }
 
     const hasPass = hasPassword(req.body.password, 10);
 
     const payload = {
-      first_name : req.body.first_name,
-      last_name : req.body.last_name,
+      first_name: req.body.first_name,
+      last_name: req.body.last_name,
       email: req.body.email.toLowerCase(),
       password: hasPass,
-      dob : req.body.dob,
-      gender : req.body.gender,
-      country : req.body.country,
-      hometown : req.body.hometown || null,
-      tribe : req.body.tribe || null,
-      village : req.body.village || null,
+      dob: req.body.dob,
+      gender: req.body.gender,
+      country: req.body.country,
+      hometown: req.body.hometown || null,
+      tribe: req.body.tribe || null,
+      village: req.body.village || null,
     };
 
-    const createdUser = await Users.create(payload);
+    await Users.create(payload);
 
-
-    createResponse(res, 'User registered successfully.');
+    createResponse(res, "User registered successfully.");
   } catch (error) {
     createResponse(res, error.message, 500);
     console.log(error.message, "error");
@@ -59,12 +60,10 @@ export const userRegister = async (req, res) => {
 
 export const userLogin = async (req, res) => {
   try {
-    const { email, password } = req.body;
-
     validation(["email", "password"], req.body);
 
     const condition = {
-      email: email.toLowerCase(),
+      email: req.body.email.toLowerCase(),
     };
 
     const user = await Users.findOne({ where: condition });
@@ -96,42 +95,33 @@ export const userLogin = async (req, res) => {
 
 export const userProfileUpdate = async (req, res) => {
   try {
-    const {
-      first_name,
-      id,
-      last_name,
-      dob,
-      gender,
-      country,
-      hometown,
-      tribe,
-      village,
-      profile,
-      alias,
-    } = req.body;
-
     validation(["first_name", "last_name", "dob", "gender", "id"], req.body);
 
     console.log("req", req.body);
     console.log("req.file", req.file);
-    const user = await Users.findOne({ where: { id } });
+
+    const condition = {
+      id: req.body.id,
+    };
+
+    const user = await Users.findOne({ where: { condition } });
 
     if (!user) {
       throw new Error("User not found");
     }
 
-    user.first_name = first_name;
-    user.last_name = last_name;
-    user.dob = dob;
-    user.gender = gender;
-    user.country = country || null;
-    user.hometown = hometown || null;
-    user.tribe = tribe || null;
-    user.village = village || null;
+    user.first_name = req.body.first_name;
+    user.last_name = req.body.last_name;
+    user.dob = req.body.dob;
+    user.gender = req.body.gender;
+    user.country = req.body.country || null;
+    user.hometown = req.body.hometown || null;
+    user.tribe = req.body.tribe || null;
+    user.village = req.body.village || null;
 
-    user.alias = alias || null;
+    user.alias = req.body.alias || null;
     if (req.file) {
-      user.profile = req.file.filename;
+      user.profile = req.body.req.file.filename;
     } else {
       user.profile = null;
     }
@@ -151,16 +141,13 @@ export const userPasswordUpdate = async (req, res) => {
 
     const user = await Users.findOne({ where: { id: id } });
 
-    const isOldPasswordValid = await compressPassword(
-      old_password,
-      user.password
-    );
+    const isOldPasswordValid = compressPassword(old_password, user.password);
 
     if (!isOldPasswordValid) {
       throw new Error("Invalid old password.");
     }
 
-    const pass = await hasPassword(new_password);
+    const pass = hasPassword(new_password);
     user.password = pass;
 
     await user.save();
