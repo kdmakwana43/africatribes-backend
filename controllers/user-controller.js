@@ -108,10 +108,11 @@ export const userLogin = async (req, res) => {
   }
 };
 
-export const userUpdate = async (req, res) => {
+export const userProfileUpdate = async (req, res) => {
   try {
     const {
       first_name,
+      id,
       last_name,
       dob,
       gender,
@@ -120,12 +121,36 @@ export const userUpdate = async (req, res) => {
       tribe,
       village,
       profile,
+      alias,
     } = req.body;
 
-    validation(
-      ["first_name", "last_name", "dob", "gender", "country"],
-      req.body
-    );
+    validation(["first_name", "last_name", "dob", "gender", "id"], req.body);
+
+    console.log("req", req.body);
+    console.log("req.file", req.file);
+    const user = await Users.findOne({ where: { id } });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    user.first_name = first_name;
+    user.last_name = last_name;
+    user.dob = dob;
+    user.gender = gender;
+    user.country = country || null;
+    user.hometown = hometown || null;
+    user.tribe = tribe || null;
+    user.village = village || null;
+
+    user.alias = alias || null;
+    if (req.file) {
+      user.profile = req.file.filename;
+    } else {
+      user.profile = null;
+    }
+    await user.save();
+    createResponse(res, "Profile update successfully.");
   } catch (error) {
     createResponse(res, error.message, 500);
     console.log(error.message, "error");

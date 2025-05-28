@@ -3,15 +3,22 @@ import {
   userRegister,
   userLogin,
   userPasswordUpdate,
+  userProfileUpdate,
 } from "../controllers/user-controller.js";
 import JWT from "jsonwebtoken";
 import Users from "../modals/user-sequelize.js";
 import { createResponse } from "../config/common.js";
+import upload from "../config/uploadFile.js";
 const Router = express.Router();
 
 Router.post("/user/register", userRegister);
 Router.post("/user/login", userLogin);
 Router.post("/user/reset/password", userPasswordUpdate);
+Router.post(
+  "/user/profile/update",
+  upload.single("profile"),
+  userProfileUpdate
+);
 
 // middleware
 
