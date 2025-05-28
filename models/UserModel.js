@@ -116,6 +116,17 @@ const Users = sequelize.define(
         },
       },
     },
+    status: {
+      type: DataTypes.ENUM('Active', 'Deactivate'),
+      allowNull: false,
+      defaultValue: 'Active',
+      validate: {
+        isIn: {
+          args: [['Active', 'Deactivate']],
+          msg: 'Status must be either Active or Deactivate'
+        }
+      }
+    }
   },
   {
     timestamps: true,

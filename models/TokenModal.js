@@ -13,9 +13,16 @@ const TokenModal = sequelize.define(
       allowNull: false,
     },
     status: {
-      type: DataTypes.ENUM("Active", "Deactivated"),
-      defaultValue: "Active",
-    },
+      type: DataTypes.ENUM('Active', 'Deactivate'),
+      allowNull: false,
+      defaultValue: 'Active',
+      validate: {
+        isIn: {
+          args: [['Active', 'Deactivate']],
+          msg: 'Status must be either Active or Deactivate'
+        }
+      }
+    }
   },
   {
     timestamps: true,

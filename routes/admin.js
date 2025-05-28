@@ -6,8 +6,10 @@ import path from "path";
 
 import { ComponentLoader, DefaultAuthProvider } from "adminjs";
 import { hasPassword } from "../config/common.js";
-import Users from "../models/UserModel.js";
 import { APP_PATH, BASE_URL } from "../config/global.js";
+
+import Users from "../models/UserModel.js";
+import SponsorModel from "../models/SponsorModel.js";
 
 AdminJS.registerAdapter(AdminJSMongoose);
 
@@ -29,6 +31,7 @@ const dashboardHandler = async () => {
 };
 
 const userResourceOptions = {
+  listProperties : ['createdAt','profile','first_name','last_name','email','gender'],
   properties: {
     password: {
       isVisible: {
@@ -87,8 +90,8 @@ const userResourceOptions = {
 const adminJs = new AdminJS({
   componentLoader,
   branding: {
-    logo: `${BASE_URL}/images/logo.png`,
-    companyName: "Node Structure",
+    logo: `${BASE_URL}/assets/africatribes_logo.svg`,
+    companyName: "Afrikatribes",
     softwareBrothers: false,
   },
   resources: [
@@ -96,6 +99,9 @@ const adminJs = new AdminJS({
       resource: Users,
       options: userResourceOptions,
     },
+    {
+      resource : SponsorModel
+    }
   ],
   dashboard: {
     component: COMPONENTS.Dashboard,
@@ -103,7 +109,7 @@ const adminJs = new AdminJS({
   },
   rootPath: "/master",
   assets: {
-    // styles: ["/sidebar.css"],
+    styles: [`${BASE_URL}/assets/sidebar.css`],
   },
 });
 
