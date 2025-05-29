@@ -11,6 +11,10 @@ export const getBlogs = async (req, res) => {
       status: "Active",
     };
 
+    if(req.body.trending != undefined){
+      condition.trending = req.body.trending
+    }
+
     const blogs = await BlogModel.findAll({
       where: condition,
       offset: parseInt(skip),
