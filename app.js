@@ -6,6 +6,7 @@ import { ConnectDb } from "./config/db-connect.js";
 import adminRouter from "./routes/admin.js";
 import { APP_PATH, path } from "./config/global.js";
 import startBlogRobot from "./robots/blogs-robot.js";
+import startUserRobot from "./robots/user-robot.js";
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ app.listen(PORT, "0.0.0.0", async () => {
 
   // Robot
   // startBlogRobot()
+  // startUserRobot();
   
 
 });
