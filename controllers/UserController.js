@@ -1,5 +1,7 @@
 import { __ } from "../config/global.js";
 import { getOtpTemplate, sendEmail } from "../config/node-mailer.js";
+import CountryModel from "../models/CountryModel.js";
+import NewsletterModel from "../models/NewsletterModel.js";
 import TokenModal from "../models/TokenModal.js";
 
 import Users from "../models/UserModel.js";
@@ -16,7 +18,7 @@ export const userRegister = async (req, res) => {
         "password",
         "dob",
         "gender",
-        "country",
+        "countryId",
       ],
       req.body
     );
@@ -42,7 +44,7 @@ export const userRegister = async (req, res) => {
       password: hasPass,
       dob: req.body.dob,
       gender: req.body.gender,
-      country: req.body.country,
+      countryId: req.body.countryId,
       hometown: req.body.hometown || null,
       tribe: req.body.tribe || null,
       village: req.body.village || null,
@@ -172,7 +174,7 @@ export const userPasswordUpdate = async (req, res) => {
 export const uploadFile = async (req, res) => {
   try {
     if (req.file) {
-      __.res(res, process.env.BASE_URL + "/images/" + req.file.filename, 200);
+    __.res(res,  "/images/" + req.file.filename, 200);
     } else {
       throw new Error("Oops! Failed to upload File or image.");
     }
@@ -252,6 +254,45 @@ export const getUserProfile = async (req, res) => {
     const user = await Users.findOne({ where: condition });
 
     __.res(res, __.authResponse(user), 200);
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};
+
+
+export const getCountries = async (req, res) => {
+  try {
+    const condition = {
+      status : 'Active'
+    };
+
+    const countries = await CountryModel.findAll({ where: condition });
+
+    __.res(res, countries, 200);
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};
+
+
+
+export const subscribeNewsletter = async (req, res) => {
+  try {
+
+     __.validation(["email"], req.body);
+
+    const condition = {
+      email : req.body.email.toLowerCase()
+    };
+
+    const isExist = await NewsletterModel.findOne({where : condition})
+    if(isExist) throw new Error('You already subscribed our newsletters')
+
+    const data = {
+      email : req.body.email.toLowerCase()
+    }
+    await NewsletterModel.create(data);
+    __.res(res, 'Thank you for subscribe newsletter!', 200);
   } catch (error) {
     __._throwError(res, error);
   }

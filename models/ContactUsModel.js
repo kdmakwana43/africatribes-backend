@@ -27,9 +27,6 @@ const ContactUsModel = sequelize.define(
     },
     email: {
       type: DataTypes.STRING,
-      unique: {
-        msg: "Email address is already in use.",
-      },
       allowNull: false,
       validate: {
         isEmail: {
@@ -51,6 +48,19 @@ const ContactUsModel = sequelize.define(
         },
       },
     },
+
+    status: {
+        type: DataTypes.ENUM("New", "In Progress","Closed"),
+        allowNull: false,
+        defaultValue: "New",
+        validate: {
+          isIn: {
+            args: [["New", "In Progress","Closed"]],
+            msg: "Status must be either New,In Progress or Closed",
+          },
+        },
+      },
+
   },
   {
     timestamps: true,

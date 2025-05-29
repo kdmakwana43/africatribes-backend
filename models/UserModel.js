@@ -1,5 +1,6 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
+import CountryModel from "./CountryModel.js"; // Make sure this path is correct
 
 const Users = sequelize.define(
   "Users",
@@ -58,14 +59,15 @@ const Users = sequelize.define(
       type: DataTypes.ENUM("male", "female"),
       allowNull: true,
     },
-    country: {
-      type: DataTypes.STRING,
-      validate: {
-        len: {
-          args: [0, 100],
-          msg: "Country can have up to 100 characters.",
-        },
+    countryId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: CountryModel.tableName,
+        key: "id",
       },
+      onUpdate: "CASCADE",
+      onDelete: "SET NULL",
     },
     hometown: {
       type: DataTypes.STRING,
@@ -141,5 +143,11 @@ const Users = sequelize.define(
     },
   }
 );
+
+// Associations
+Users.belongsTo(CountryModel, {
+  foreignKey: "countryId",
+  as: "country",
+});
 
 export default Users;

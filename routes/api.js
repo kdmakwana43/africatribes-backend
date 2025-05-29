@@ -4,6 +4,7 @@ import {
   UserController,
   ContactController,
   SponsorController,
+  BlogController,
 } from "../controllers/__init__.js";
 
 import JWT from "jsonwebtoken";
@@ -25,15 +26,22 @@ Router.post(
 );
 Router.post("/user/forgot/password", UserController.userForgotPassword);
 Router.post("/user/reset/password", UserController.userResetPassword);
+Router.post("/countries", UserController.getCountries);
+Router.post("/newsletter/subscribe", UserController.subscribeNewsletter);
 
 // contact
 Router.post("/contact", ContactController.addContact);
+
 // file upload
 Router.post("/upload-file", upload.single("file"), UserController.uploadFile);
 
-// sponsor
-
+// sponsors
 Router.post("/get/sponsors", SponsorController.getSponsors);
+
+
+// Blogs
+Router.post("/blogs", BlogController.getBlogs);
+
 
 // middleware
 

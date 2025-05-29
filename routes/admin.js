@@ -10,6 +10,10 @@ import { APP_PATH, BASE_URL } from "../config/global.js";
 
 import Users from "../models/UserModel.js";
 import SponsorModel from "../models/SponsorModel.js";
+import CountryModel from "../models/CountryModel.js";
+import BlogModel from "../models/BlogModel.js";
+import NewsletterModel from "../models/NewsletterModel.js";
+import ContactUsModel from "../models/ContactUsModel.js";
 
 AdminJS.registerAdapter(AdminJSMongoose);
 
@@ -31,7 +35,7 @@ const dashboardHandler = async () => {
 };
 
 const userResourceOptions = {
-  listProperties : ['createdAt','profile','first_name','last_name','email','gender'],
+  listProperties : ['createdAt','profile','first_name','last_name','email','gender','countryId'],
   properties: {
     password: {
       isVisible: {
@@ -45,6 +49,7 @@ const userResourceOptions = {
       components: {
         show: COMPONENTS.ShowImage,
         list: COMPONENTS.ShowImage,
+        edit : COMPONENTS.UploadImage,
       },
       custom: {
         styles: {
@@ -100,7 +105,77 @@ const adminJs = new AdminJS({
       options: userResourceOptions,
     },
     {
-      resource : SponsorModel
+      resource : SponsorModel,
+      options : {
+        listProperties : ['createdAt','logo','title','status'],
+        properties : {
+          logo: {
+            components: {
+              edit : COMPONENTS.UploadImage,
+              show: COMPONENTS.ShowImage,
+              list: COMPONENTS.ShowImage,
+            },
+            custom: {
+              styles: {
+                show: {
+                  height: 100,
+                  width: 100,
+                  borderRadius: '8px',
+                },
+                list: {
+                  height: 40,
+                  width: 40,
+                  borderRadius: '50%',
+                },
+              },
+            },
+          },
+        }
+      }
+    },
+    {
+      resource : BlogModel,
+      options : {
+        listProperties : ['createdAt','image','title','trending','status'],
+        properties : {
+          image: {
+            components: {
+              edit : COMPONENTS.UploadImage,
+              show: COMPONENTS.ShowImage,
+              list: COMPONENTS.ShowImage,
+            },
+            custom: {
+              styles: {
+                show: {
+                  height: 100,
+                  width: 100,
+                  borderRadius: '8px',
+                },
+                list: {
+                  height: 40,
+                  width: 40,
+                  borderRadius: '50%',
+                },
+              },
+            },
+          },
+        }
+      }
+    },
+    {
+      resource : CountryModel
+    },
+    {
+      resource : NewsletterModel,
+      options : {
+        listProperties : ['createdAt','email']
+      }
+    },
+    {
+      resource : ContactUsModel,
+      options : {
+        listProperties : ['createdAt','first_name','last_name','email','status']
+      }
     }
   ],
   dashboard: {

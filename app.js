@@ -5,7 +5,7 @@ import Router from "./routes/api.js";
 import { ConnectDb } from "./config/db-connect.js";
 import adminRouter from "./routes/admin.js";
 import { APP_PATH, path } from "./config/global.js";
-
+import startBlogRobot from "./robots/blogs-robot.js";
 
 dotenv.config();
 
@@ -24,8 +24,16 @@ app.use(express.static(path.join(APP_PATH, "../public")));
 app.use("/api/v1", Router);
 app.use("/master", adminRouter);
 
+
+
 // Start server
 app.listen(PORT, "0.0.0.0", async () => {
   console.log(`Server is running on port ${PORT}`);
   ConnectDb();
+
+
+  // Robot
+  // startBlogRobot()
+  
+
 });

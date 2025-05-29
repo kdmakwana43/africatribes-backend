@@ -82,7 +82,7 @@ const ImageUploader = (props) => {
           fontWeight: "400",
         }}
       >
-        Profile
+        {property.name}
       </Text>
 
       {previewUrl ? (

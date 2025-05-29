@@ -5,10 +5,11 @@ const ShowImage = ({ property, record, view = "default" }) => {
     height: 60,
     width: 60,
     borderRadius: '100%',
+    objectFit : 'cover'
   };
 
   if (image && !image.startsWith('http')) {
-    image = '/' + image;
+    // image = '/' + image;
   }
 
   if (!image) return <div>--</div>;
