@@ -98,7 +98,7 @@ export const userProfileUpdate = async (req, res) => {
     const condition = {
       id: req.Auth.id,
     };
-
+    console.log("req", req.body);
     const user = await Users.findOne({ where: condition });
 
     if (req.body.email) {
@@ -134,7 +134,7 @@ export const userProfileUpdate = async (req, res) => {
     });
 
     await user.save();
-    __.res(res, authResponse(user.toJSON()), 200);
+    __.res(res, __.authResponse(user.toJSON()), 200);
   } catch (error) {
     __._throwError(res, error);
   }
@@ -238,6 +238,20 @@ export const userResetPassword = async (req, res) => {
     await isExistToken.save();
 
     __.res(res, "Password reset successfully.", 200);
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};
+
+export const getUserProfile = async (req, res) => {
+  try {
+    const condition = {
+      id: req.Auth.id,
+    };
+
+    const user = await Users.findOne({ where: condition });
+
+    __.res(res, __.authResponse(user), 200);
   } catch (error) {
     __._throwError(res, error);
   }
