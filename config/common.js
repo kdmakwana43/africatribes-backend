@@ -76,3 +76,37 @@ export const authResponse = (user, token = false) => {
 export const generateToken = () => {
   return crypto.randomBytes(32).toString("hex");
 };
+
+export const res = (res, message, status, is_api = true) => {
+  if (status !== 200) {
+    if (message === "default") {
+      message = "Oops! something went wrong,Please try again.";
+    }
+    const response = {
+      status: 0,
+      code: status,
+      data: message,
+    };
+    if (is_api) {
+      res.status(200).send(JSON.stringify(response));
+    } else {
+      res.status(status).send(message);
+    }
+    return;
+  }
+
+  const response = {
+    status: 1,
+    code: status,
+    data: message,
+  };
+  if (is_api) {
+    res.status(200).send(JSON.stringify(response));
+  } else {
+    res.status(status).send(message);
+  }
+};
+
+export const _throwError = (respone, error) => {
+  return res(respone, error.message, 500);
+};

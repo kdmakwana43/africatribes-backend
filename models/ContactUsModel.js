@@ -11,7 +11,7 @@ const ContactUsModel = sequelize.define(
       validate: {
         len: {
           args: [2, 50],
-          msg: "First name must be between 1 and 50 characters long.",
+          msg: "First name must be between 2 and 50 characters long.",
         },
       },
     },

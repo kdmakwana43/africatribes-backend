@@ -1,11 +1,15 @@
 import express from "express";
 
-import { UserController, ContactController } from "../controllers/__init__.js";
+import {
+  UserController,
+  ContactController,
+  SponsorController,
+} from "../controllers/__init__.js";
 
 import JWT from "jsonwebtoken";
 import Users from "../models/UserModel.js";
-import { createResponse } from "../config/common.js";
 import upload from "../config/uploadFile.js";
+import { __ } from "../config/global.js";
 
 const Router = express.Router();
 // users
@@ -23,10 +27,12 @@ Router.post("/user/reset/password", UserController.userResetPassword);
 
 // contact
 Router.post("/contact", ContactController.addContact);
-
-
-
+// file upload
 Router.post("/upload-file", upload.single("file"), UserController.uploadFile);
+
+// sponsor
+
+Router.post("/get/sponsors", SponsorController.getSponsors);
 
 // middleware
 
@@ -49,7 +55,7 @@ async function _auth(req, res, next) {
     req.Auth = user.toJSON();
     next();
   } catch (error) {
-    createResponse(res, error.message, 500);
+    __._throwError(res, error);
   }
 }
 

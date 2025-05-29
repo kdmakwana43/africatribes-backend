@@ -47,7 +47,7 @@ export const sendEmail = async (toEmail, subject, html) => {
     secure: false,
     auth: {
       user: "nilesh.asservices@gmail.com",
-      pass: "awjg ybze lkuy hvzt",
+      pass: "wvpu zfec gpnq slzi",
     },
   });
 

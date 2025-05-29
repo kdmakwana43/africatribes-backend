@@ -1,4 +1,4 @@
 import * as UserController from "./UserController.js";
 import * as ContactController from "./ContactController.js";
-
-export { UserController, ContactController };
+import * as SponsorController from "./SponsorController.js";
+export { UserController, ContactController, SponsorController };

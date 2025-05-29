@@ -1,11 +1,4 @@
-import {
-  validation,
-  compressPassword,
-  createResponse,
-  hasPassword,
-  authResponse,
-  generateToken,
-} from "../config/common.js";
+import { __ } from "../config/global.js";
 import { getOtpTemplate, sendEmail } from "../config/node-mailer.js";
 import TokenModal from "../models/TokenModal.js";
 
@@ -15,7 +8,7 @@ import { Op } from "sequelize";
 
 export const userRegister = async (req, res) => {
   try {
-    validation(
+    __.validation(
       [
         "first_name",
         "last_name",
@@ -40,7 +33,7 @@ export const userRegister = async (req, res) => {
       );
     }
 
-    const hasPass = hasPassword(req.body.password, 10);
+    const hasPass = __.hasPassword(req.body.password, 10);
 
     const payload = {
       first_name: req.body.first_name,
@@ -57,16 +50,15 @@ export const userRegister = async (req, res) => {
 
     await Users.create(payload);
 
-    createResponse(res, "User registered successfully.");
+    __.res(res, "User registered successfully.", 200);
   } catch (error) {
-    createResponse(res, error.message, 500);
-    console.log(error.message, "error");
+    __._throwError(res, error);
   }
 };
 
 export const userLogin = async (req, res) => {
   try {
-    validation(["email", "password"], req.body);
+    __.validation(["email", "password"], req.body);
 
     const condition = {
       email: req.body.email.toLowerCase(),
@@ -78,7 +70,10 @@ export const userLogin = async (req, res) => {
       throw new Error(`Email is not exit! Please check your Email.`);
     }
 
-    const isPasswordValid = compressPassword(req.body.password, user.password);
+    const isPasswordValid = __.compressPassword(
+      req.body.password,
+      user.password
+    );
 
     if (!isPasswordValid) {
       throw new Error("Invalid password! Please check your password.");
@@ -92,27 +87,21 @@ export const userLogin = async (req, res) => {
       token,
     };
 
-    createResponse(res, userResponse);
+    __.res(res, userResponse, 200);
   } catch (error) {
-    console.log(error.message, "error");
-    createResponse(res, error.message, 500);
+    __._throwError(res, error);
   }
 };
 
 export const userProfileUpdate = async (req, res) => {
   try {
-    console.log(req.body, req.body);
-
     const condition = {
       id: req.Auth.id,
     };
 
     const user = await Users.findOne({ where: condition });
-    console.log("req.body", req.body);
 
     if (req.body.email) {
-      console.log(req.body.email, "email");
-
       const emailCondition = {
         email: req.body.email,
         id: {
@@ -145,10 +134,9 @@ export const userProfileUpdate = async (req, res) => {
     });
 
     await user.save();
-    createResponse(res, authResponse(user.toJSON()));
+    __.res(res, authResponse(user.toJSON()), 200);
   } catch (error) {
-    createResponse(res, error.message, 500);
-    console.log(error.message, "error");
+    __._throwError(res, error);
   }
 };
 
@@ -156,42 +144,40 @@ export const userPasswordUpdate = async (req, res) => {
   try {
     const { old_password, new_password, id } = req.body;
 
-    validation(["old_password", "new_password", "id"], req.body);
+    __.validation(["old_password", "new_password", "id"], req.body);
 
     const user = await Users.findOne({ where: { id: id } });
 
-    const isOldPasswordValid = compressPassword(old_password, user.password);
+    const isOldPasswordValid = __.compressPassword(old_password, user.password);
 
     if (!isOldPasswordValid) {
       throw new Error("Invalid old password.");
     }
 
-    const pass = hasPassword(new_password);
+    const pass = __.hasPassword(new_password);
     user.password = pass;
 
     await user.save();
-    createResponse(res, "Password Update Successfully.");
+    __.res(res, "Password Update Successfully.", 200);
   } catch (error) {
-    createResponse(res, error.message, 500);
-    console.log(error.message, "error");
+    __._throwError(res, error);
   }
 };
-
 
 export const uploadFile = async (req, res) => {
   try {
     if (req.file) {
-      createResponse(res, process.env.BASE_URL + "/images/" + req.file.filename, 200);
+      __.res(res, process.env.BASE_URL + "/images/" + req.file.filename, 200);
     } else {
       throw new Error("Oops! Failed to upload File or image.");
     }
   } catch (error) {
-    // __._throwError(res, error);
+    __._throwError(res, error);
   }
 };
 export const userForgotPassword = async (req, res) => {
   try {
-    validation(["email"], req.body);
+    __.validation(["email"], req.body);
 
     const condition = {
       email: req.body.email.toLowerCase(),
@@ -203,7 +189,7 @@ export const userForgotPassword = async (req, res) => {
       throw new Error(`Email is not exit! Please check your Email. `);
     }
 
-    const token = generateToken();
+    const token = __.generateToken();
 
     sendEmail(req.body.email, "Forgot Password", getOtpTemplate(token));
 
@@ -213,16 +199,14 @@ export const userForgotPassword = async (req, res) => {
     };
 
     await TokenModal.create(payload);
-
-    console.log("token10", token);
   } catch (error) {
-    createResponse(res, error.message, 500);
+    __._throwError(res, error);
   }
 };
 
 export const userResetPassword = async (req, res) => {
   try {
-    validation(["token", "new_password"], req.body);
+    __.validation(["token", "new_password"], req.body);
 
     const condition = {
       token: req.body.token,
@@ -241,16 +225,15 @@ export const userResetPassword = async (req, res) => {
       throw new Error(`User not found!`);
     }
 
-    const pass = hasPassword(req.body.new_password);
+    const pass = __.hasPassword(req.body.new_password);
     user.password = pass;
 
     await user.save();
     isExistToken.status = "Deactivated";
     await isExistToken.save();
 
-    createResponse(res, "Password reset successfully.");
+    __.res(res, "Password reset successfully.", 200);
   } catch (error) {
-    createResponse(res, error.message, 500);
-    console.log(error.message, "error");
+    __._throwError(res, error);
   }
 };
