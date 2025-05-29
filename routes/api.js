@@ -21,7 +21,7 @@ Router.post("/user/get/profile", _auth, UserController.getUserProfile);
 Router.post(
   "/user/profile/update",
   _auth,
-  upload.none(),
+  upload.single("profile"),
   UserController.userProfileUpdate
 );
 Router.post("/user/forgot/password", UserController.userForgotPassword);

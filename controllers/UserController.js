@@ -52,6 +52,25 @@ export const userRegister = async (req, res) => {
 
     await Users.create(payload);
 
+
+    if(req.body.subscribeNewsletter){
+      
+      try {
+        const isExist = await NewsletterModel.findOne({where : {
+          email : req.body.email.toLowerCase()
+        }})
+      if(!isExist){
+        const data = {
+          email : req.body.email.toLowerCase()
+        }
+        await NewsletterModel.create(data);
+      }
+      } catch (error) {
+        console.log('error',error)
+      }
+
+    }
+
     __.res(res, "User registered successfully.", 200);
   } catch (error) {
     __._throwError(res, error);
@@ -117,6 +136,11 @@ export const userProfileUpdate = async (req, res) => {
           `This User is already associated with ${req.body.email}`
         );
       }
+    }
+
+
+    if(req.file){
+      req.body.profile = `/images/${req.file.filename}`
     }
 
     const NOT_ALLOW_UPDATE = [
