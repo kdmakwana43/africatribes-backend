@@ -1,5 +1,10 @@
-const ShowImage = ({ property, record, view = "default" }) => {
+const ShowImage = ({ property, record, view = "list" }) => {
   let image = record?.params?.[property.name];
+
+
+  if(window.location.href.match('/show')){
+    view = 'show'
+  }
 
   const styles = property.custom?.styles?.[view] || {
     height: 60,

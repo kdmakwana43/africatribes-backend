@@ -29,6 +29,14 @@ Router.post("/user/reset/password", UserController.userResetPassword);
 Router.post("/countries", UserController.getCountries);
 Router.post("/newsletter/subscribe", UserController.subscribeNewsletter);
 
+// contribution
+Router.post("/contribution/create", _auth, UserController.addContribution);
+Router.post("/contribution/details", _auth, UserController.getContribution);
+Router.post("/contributions", _auth, UserController.listContributions);
+Router.post("/contribution/update", _auth, UserController.updateContribution);
+Router.post("/contribution/delete", _auth, UserController.deleteContribution);
+
+
 // contact
 Router.post("/contact", ContactController.addContact);
 

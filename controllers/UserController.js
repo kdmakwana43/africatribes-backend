@@ -1,5 +1,6 @@
 import { __ } from "../config/global.js";
 import { getOtpTemplate, sendEmail } from "../config/node-mailer.js";
+import ContributionModel from "../models/ContributionModel.js";
 import CountryModel from "../models/CountryModel.js";
 import NewsletterModel from "../models/NewsletterModel.js";
 import TokenModal from "../models/TokenModal.js";
@@ -321,3 +322,126 @@ export const subscribeNewsletter = async (req, res) => {
     __._throwError(res, error);
   }
 };
+
+
+export const addContribution = async (req, res) => {
+  try {
+    __.validation(["title", "category"], req.body);
+
+    const { title, category, description } = req.body;
+
+    const payload = {
+      userId : req.Auth.id,
+      title,
+      category,
+      description,
+    };
+
+    const contribution = await ContributionModel.create(payload);
+
+    __.res(res, contribution, 200);
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};
+
+
+export const getContribution = async (req, res) => {
+  try {
+
+    __.validation(["id"], req.body);
+    const { id } = req.body;
+
+    const condition = {
+      id : id,
+      userId : req.Auth.id
+    }
+
+    const contribution = await ContributionModel.findOne({where : condition});
+    if (!contribution) throw new Error("Contribution not found.");
+
+    __.res(res, contribution, 200);
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};
+
+
+export const listContributions = async (req, res) => {
+  try {
+    const { skip = 0, limit = 10, sort = "createdAt:DESC"} = req.query;
+
+    const [sortField, sortOrder] = sort.split(":");
+
+    const contributions = await ContributionModel.findAll({
+      offset: parseInt(skip),
+      limit: parseInt(limit),
+     order: [[sortField || "createdAt", sortOrder?.toUpperCase() || "DESC"]],
+    });
+
+    __.res(res, contributions, 200);
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};
+
+
+export const updateContribution = async (req, res) => {
+  try {
+
+    __.validation(["id"], req.body);
+
+    const { id } = req.body;
+
+
+    const condition = {
+      id: id,
+      userId: req.Auth.id,
+    };
+
+    const contribution = await ContributionModel.findOne({ where: condition });
+    if (!contribution) {
+      throw new Error("Contribution not found or unauthorized.");
+    }
+
+    const allowedFields = ["title", "category", "description"];
+    const updateData = {};
+
+    allowedFields.forEach((field) => {
+      if (req.body.hasOwnProperty(field)) {
+        updateData[field] = req.body[field];
+      }
+    });
+
+    await contribution.update(updateData);
+
+    __.res(res, contribution, 200);
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};
+
+
+export const deleteContribution = async (req, res) => {
+  try {
+
+    __.validation(["id"], req.body);
+
+    const { id } = req.body;
+
+     const condition = {
+      id : id,
+      userId : req.Auth.id
+    }
+
+    const contribution = await ContributionModel.findOne({where : condition});
+    if (!contribution) throw new Error("Contribution not found.");
+
+    await contribution.destroy();
+
+    __.res(res, "Contribution deleted successfully.", 200);
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};
+

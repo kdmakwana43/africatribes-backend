@@ -14,6 +14,7 @@ import CountryModel from "../models/CountryModel.js";
 import BlogModel from "../models/BlogModel.js";
 import NewsletterModel from "../models/NewsletterModel.js";
 import ContactUsModel from "../models/ContactUsModel.js";
+import ContributionModel from "../models/ContributionModel.js";
 
 AdminJS.registerAdapter(AdminJSMongoose);
 
@@ -147,14 +148,14 @@ const adminJs = new AdminJS({
             custom: {
               styles: {
                 show: {
-                  height: 100,
-                  width: 100,
+                  height: 200,
+                  width: 200,
                   borderRadius: '8px',
                 },
                 list: {
                   height: 40,
                   width: 40,
-                  borderRadius: '50%',
+                  borderRadius: '5px',
                 },
               },
             },
@@ -163,7 +164,13 @@ const adminJs = new AdminJS({
       }
     },
     {
-      resource : CountryModel
+      resource : CountryModel,
+      options : {
+        parent : {
+          name : 'Countries'
+        },
+        listProperties : ['name','status']
+      }
     },
     {
       resource : NewsletterModel,
@@ -175,6 +182,12 @@ const adminJs = new AdminJS({
       resource : ContactUsModel,
       options : {
         listProperties : ['createdAt','first_name','last_name','email','status']
+      }
+    },
+    {
+      resource : ContributionModel,
+      options : {
+        listProperties : ['createdAt','userId','title','category']
       }
     }
   ],
