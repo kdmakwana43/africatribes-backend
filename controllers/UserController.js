@@ -142,19 +142,24 @@ export const userProfileUpdate = async (req, res) => {
 
 export const userPasswordUpdate = async (req, res) => {
   try {
-    const { old_password, new_password, id } = req.body;
+    __.validation(["old_password", "new_password"], req.body);
 
-    __.validation(["old_password", "new_password", "id"], req.body);
+    const condition = {
+      id: req.Auth.id,
+    };
 
-    const user = await Users.findOne({ where: { id: id } });
+    const user = await Users.findOne({ where: condition });
 
-    const isOldPasswordValid = __.compressPassword(old_password, user.password);
+    const isOldPasswordValid = __.compressPassword(
+      req.body.old_password,
+      user.password
+    );
 
     if (!isOldPasswordValid) {
       throw new Error("Invalid old password.");
     }
 
-    const pass = __.hasPassword(new_password);
+    const pass = __.hasPassword(req.body.new_password);
     user.password = pass;
 
     await user.save();

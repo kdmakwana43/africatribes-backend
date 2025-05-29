@@ -15,7 +15,7 @@ const Router = express.Router();
 // users
 Router.post("/user/register", UserController.userRegister);
 Router.post("/user/login", UserController.userLogin);
-Router.post("/user/password/update", UserController.userPasswordUpdate);
+Router.post("/user/password/update", _auth, UserController.userPasswordUpdate);
 Router.post(
   "/user/profile/update",
   _auth,
