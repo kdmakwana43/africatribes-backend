@@ -26,25 +26,46 @@ import BannerModel from "../models/BannerModel.js";
 
 AdminJS.registerAdapter(AdminJSMongoose);
 
-console.log('APP_PATH',APP_PATH)
+console.log("APP_PATH", APP_PATH);
 
 // Initialize component loader
 const componentLoader = new ComponentLoader();
 const COMPONENTS = {
-  Dashboard: componentLoader.add("Dashboard", path.join(APP_PATH, "admin/Dashboard")),
-  UploadImage: componentLoader.add("UploadImage", path.join(APP_PATH, "admin/ImageUploader")),
-  ShowImage: componentLoader.add("ShowImage", path.join(APP_PATH, "admin/ShowImage")),
+  Dashboard: componentLoader.add(
+    "Dashboard",
+    path.join(APP_PATH, "admin/Dashboard")
+  ),
+  UploadImage: componentLoader.add(
+    "UploadImage",
+    path.join(APP_PATH, "admin/ImageUploader")
+  ),
+  ShowImage: componentLoader.add(
+    "ShowImage",
+    path.join(APP_PATH, "admin/ShowImage")
+  ),
 };
 
 const dashboardHandler = async () => {
-//   const userCount = await UserModel.countDocuments();
+  //   const userCount = await UserModel.countDocuments();
   return {
     "Total Users": 1,
   };
 };
 
 const userResourceOptions = {
-  listProperties : ['createdAt','profile','first_name','last_name','email','gender','countryId'],
+  parent: {
+    name: "Users",
+    icon: "Users",
+  },
+  listProperties: [
+    "createdAt",
+    "profile",
+    "first_name",
+    "last_name",
+    "email",
+    "gender",
+    "countryId",
+  ],
   properties: {
     password: {
       isVisible: {
@@ -58,24 +79,23 @@ const userResourceOptions = {
       components: {
         show: COMPONENTS.ShowImage,
         list: COMPONENTS.ShowImage,
-        edit : COMPONENTS.UploadImage,
+        edit: COMPONENTS.UploadImage,
       },
       custom: {
         styles: {
           show: {
             height: 100,
             width: 100,
-            borderRadius: '8px',
+            borderRadius: "8px",
           },
           list: {
             height: 40,
             width: 40,
-            borderRadius: '50%',
+            borderRadius: "50%",
           },
         },
       },
     },
-
   },
   actions: {
     new: {
@@ -114,13 +134,17 @@ const adminJs = new AdminJS({
       options: userResourceOptions,
     },
     {
-      resource : SponsorModel,
-      options : {
-        listProperties : ['createdAt','logo','title','status'],
-        properties : {
+      resource: SponsorModel,
+      options: {
+        parent: {
+          name: "Others",
+          icon: "Box",
+        },
+        listProperties: ["createdAt", "logo", "title", "status"],
+        properties: {
           logo: {
             components: {
-              edit : COMPONENTS.UploadImage,
+              edit: COMPONENTS.UploadImage,
               show: COMPONENTS.ShowImage,
               list: COMPONENTS.ShowImage,
             },
@@ -129,27 +153,30 @@ const adminJs = new AdminJS({
                 show: {
                   height: 100,
                   width: 100,
-                  borderRadius: '8px',
+                  borderRadius: "8px",
                 },
                 list: {
                   height: 40,
                   width: 40,
-                  borderRadius: '50%',
+                  borderRadius: "50%",
                 },
               },
             },
           },
-        }
-      }
+        },
+      },
     },
     {
-      resource : BlogModel,
-      options : {
-        listProperties : ['createdAt','image','title','trending','status'],
-        properties : {
+      resource: BlogModel,
+      options: {
+        parent: {
+          name: "Others",
+        },
+        listProperties: ["createdAt", "image", "title", "trending", "status"],
+        properties: {
           image: {
             components: {
-              edit : COMPONENTS.UploadImage,
+              edit: COMPONENTS.UploadImage,
               show: COMPONENTS.ShowImage,
               list: COMPONENTS.ShowImage,
             },
@@ -158,155 +185,169 @@ const adminJs = new AdminJS({
                 show: {
                   height: 200,
                   width: 200,
-                  borderRadius: '8px',
+                  borderRadius: "8px",
                 },
                 list: {
                   height: 40,
                   width: 40,
-                  borderRadius: '5px',
+                  borderRadius: "5px",
                 },
               },
             },
           },
-        }
-      }
-    },
-    {
-      resource : CountryModel,
-      options : {
-        parent : {
-          name : 'Countries'
         },
-        listProperties : ['name','status']
-      }
+      },
     },
     {
-      resource : NewsletterModel,
-      options : {
-        listProperties : ['createdAt','email']
-      }
-    },
-    {
-      resource : ContactUsModel,
-      options : {
-        listProperties : ['createdAt','first_name','last_name','email','status']
-      }
-    },
-    {
-      resource : ContributionModel,
-      options : {
-        listProperties : ['createdAt','userId','title','category']
-      }
-    },
-     {
-      resource : AboutUsModel,
-      options : {
-        parent : {
-          name : 'Pages'
+      resource: CountryModel,
+      options: {
+        parent: {
+          name: "Countries",
+          icon: "Map",
         },
-        properties : {
-          corporate : {
-            type : 'richtext'
+        listProperties: ["name", "status"],
+      },
+    },
+    {
+      resource: NewsletterModel,
+      options: {
+        parent: {
+          name: "Others",
+        },
+        listProperties: ["createdAt", "email"],
+      },
+    },
+    {
+      resource: ContactUsModel,
+      options: {
+        parent: {
+          name: "Others",
+        },
+        listProperties: [
+          "createdAt",
+          "first_name",
+          "last_name",
+          "email",
+          "status",
+        ],
+      },
+    },
+    {
+      resource: ContributionModel,
+      options: {
+        parent: {
+          name: "Users",
+        },
+        listProperties: ["createdAt", "userId", "title", "category"],
+      },
+    },
+    {
+      resource: AboutUsModel,
+      options: {
+        parent: {
+          name: "Pages",
+          icon: "Edit",
+        },
+        properties: {
+          corporate: {
+            type: "richtext",
           },
-          vision : {
-            type : 'richtext'
+          vision: {
+            type: "richtext",
           },
-          mission : {
-            type : 'richtext'
+          mission: {
+            type: "richtext",
           },
-          objectives : {
-            type : 'richtext'
+          objectives: {
+            type: "richtext",
           },
-          content : {
-            type : 'richtext'
+          content: {
+            type: "richtext",
           },
-        }
+        },
         // listProperties : ['createdAt','title','content']
       },
     },
 
+    {
+      resource: WhyAfrikatribePageModel,
+      options: {
+        parent: {
+          name: "Pages",
+        },
+        properties: {
+          content: {
+            type: "richtext",
+          },
+        },
+      },
+    },
 
-     {
-      resource : WhyAfrikatribePageModel,
-      options : {
-        parent : {
-          name : 'Pages'
+    {
+      resource: PricingOptionPageModel,
+      options: {
+        parent: {
+          name: "Pages",
         },
-        properties : {
-          content : {
-            type : 'richtext'
+        properties: {
+          content: {
+            type: "richtext",
           },
-        }
+        },
       },
     },
-     
-    
+
     {
-      resource : PricingOptionPageModel,
-      options : {
-        parent : {
-          name : 'Pages'
+      resource: PrivacyPolicyPageModel,
+      options: {
+        parent: {
+          name: "Pages",
         },
-        properties : {
-          content : {
-            type : 'richtext'
+        properties: {
+          content: {
+            type: "richtext",
           },
-        }
+        },
       },
     },
-   
-   
+
     {
-      resource : PrivacyPolicyPageModel,
-      options : {
-        parent : {
-          name : 'Pages'
+      resource: TermsAndConditionPageModel,
+      options: {
+        parent: {
+          name: "Pages",
         },
-        properties : {
-          content : {
-            type : 'richtext'
+        properties: {
+          content: {
+            type: "richtext",
           },
-        }
+        },
       },
     },
-    
+
     {
-      resource : TermsAndConditionPageModel,
-      options : {
-        parent : {
-          name : 'Pages'
+      resource: DisclaimerPageModel,
+      options: {
+        parent: {
+          name: "Pages",
         },
-        properties : {
-          content : {
-            type : 'richtext'
+        properties: {
+          content: {
+            type: "richtext",
           },
-        }
-      },
-    },
-    
-    {
-      resource : DisclaimerPageModel,
-      options : {
-        parent : {
-          name : 'Pages'
         },
-        properties : {
-          content : {
-            type : 'richtext'
-          },
-        }
       },
     },
     {
-      resource : BannerModel,
-      options : {
-        parent : {
-          name : 'Pages'
+      resource: BannerModel,
+      options: {
+        parent: {
+          name: "Pages",
         },
-        properties : {
+        properties: {
           banner: {
             components: {
-              edit : COMPONENTS.UploadImage,
+              edit: COMPONENTS.UploadImage,
               show: COMPONENTS.ShowImage,
               list: COMPONENTS.ShowImage,
             },
@@ -315,60 +356,58 @@ const adminJs = new AdminJS({
                 show: {
                   height: 300,
                   width: 300,
-                  borderRadius: '8px',
+                  borderRadius: "8px",
                 },
                 list: {
                   height: 60,
                   width: 60,
-                  borderRadius: '5px',
+                  borderRadius: "5px",
                 },
               },
             },
           },
-        }
+        },
       },
     },
 
     {
-      resource : FAQModel,
-      options : {
-        parent : {
-          name : 'Pages'
+      resource: FAQModel,
+      options: {
+        parent: {
+          name: "Pages",
         },
-        properties : {
-          question : {
-            position : 1
+        properties: {
+          question: {
+            position: 1,
           },
-          answer : {
-            position : 2
+          answer: {
+            position: 2,
           },
-        }
+        },
       },
     },
-
-
   ],
   dashboard: {
     component: COMPONENTS.Dashboard,
     handler: dashboardHandler,
   },
   locale: {
-  translations: {
-    resources: {
-      FAQModel: {
-        name: 'FAQs',
-        name_plural: 'FAQs',
+    translations: {
+      resources: {
+        FAQModel: {
+          name: "FAQs",
+          name_plural: "FAQs",
+        },
       },
     },
   },
-},
   rootPath: "/master",
   assets: {
     styles: [`${BASE_URL}/assets/sidebar.css`],
   },
 });
 
-adminJs.watch()
+adminJs.watch();
 
 const ADMIN = {
   email: "admin@mail.com",
