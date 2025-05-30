@@ -15,6 +15,14 @@ import BlogModel from "../models/BlogModel.js";
 import NewsletterModel from "../models/NewsletterModel.js";
 import ContactUsModel from "../models/ContactUsModel.js";
 import ContributionModel from "../models/ContributionModel.js";
+import AboutUsModel from "../models/AboutUsModel.js";
+import WhyAfrikatribePageModel from "../models/WhyAfrikatribePageModel.js";
+import PricingOptionPageModel from "../models/PricingOptionPageModel.js";
+import PrivacyPolicyPageModel from "../models/PrivacyPolicyPageModel.js";
+import TermsAndConditionPageModel from "../models/TermsAndConditionPageModel.js";
+import FAQModel from "../models/FAQModel.js";
+import DisclaimerPageModel from "../models/DisclaimerPageModel.js";
+import BannerModel from "../models/BannerModel.js";
 
 AdminJS.registerAdapter(AdminJSMongoose);
 
@@ -189,12 +197,171 @@ const adminJs = new AdminJS({
       options : {
         listProperties : ['createdAt','userId','title','category']
       }
-    }
+    },
+     {
+      resource : AboutUsModel,
+      options : {
+        parent : {
+          name : 'Pages'
+        },
+        properties : {
+          corporate : {
+            type : 'richtext'
+          },
+          vision : {
+            type : 'richtext'
+          },
+          mission : {
+            type : 'richtext'
+          },
+          objectives : {
+            type : 'richtext'
+          },
+          content : {
+            type : 'richtext'
+          },
+        }
+        // listProperties : ['createdAt','title','content']
+      },
+    },
+
+
+     {
+      resource : WhyAfrikatribePageModel,
+      options : {
+        parent : {
+          name : 'Pages'
+        },
+        properties : {
+          content : {
+            type : 'richtext'
+          },
+        }
+      },
+    },
+     
+    
+    {
+      resource : PricingOptionPageModel,
+      options : {
+        parent : {
+          name : 'Pages'
+        },
+        properties : {
+          content : {
+            type : 'richtext'
+          },
+        }
+      },
+    },
+   
+   
+    {
+      resource : PrivacyPolicyPageModel,
+      options : {
+        parent : {
+          name : 'Pages'
+        },
+        properties : {
+          content : {
+            type : 'richtext'
+          },
+        }
+      },
+    },
+    
+    {
+      resource : TermsAndConditionPageModel,
+      options : {
+        parent : {
+          name : 'Pages'
+        },
+        properties : {
+          content : {
+            type : 'richtext'
+          },
+        }
+      },
+    },
+    
+    {
+      resource : DisclaimerPageModel,
+      options : {
+        parent : {
+          name : 'Pages'
+        },
+        properties : {
+          content : {
+            type : 'richtext'
+          },
+        }
+      },
+    },
+    {
+      resource : BannerModel,
+      options : {
+        parent : {
+          name : 'Pages'
+        },
+        properties : {
+          banner: {
+            components: {
+              edit : COMPONENTS.UploadImage,
+              show: COMPONENTS.ShowImage,
+              list: COMPONENTS.ShowImage,
+            },
+            custom: {
+              styles: {
+                show: {
+                  height: 300,
+                  width: 300,
+                  borderRadius: '8px',
+                },
+                list: {
+                  height: 60,
+                  width: 60,
+                  borderRadius: '5px',
+                },
+              },
+            },
+          },
+        }
+      },
+    },
+
+    {
+      resource : FAQModel,
+      options : {
+        parent : {
+          name : 'Pages'
+        },
+        properties : {
+          question : {
+            position : 1
+          },
+          answer : {
+            position : 2
+          },
+        }
+      },
+    },
+
+
   ],
   dashboard: {
     component: COMPONENTS.Dashboard,
     handler: dashboardHandler,
   },
+  locale: {
+  translations: {
+    resources: {
+      FAQModel: {
+        name: 'FAQs',
+        name_plural: 'FAQs',
+      },
+    },
+  },
+},
   rootPath: "/master",
   assets: {
     styles: [`${BASE_URL}/assets/sidebar.css`],

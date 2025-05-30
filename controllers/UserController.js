@@ -374,6 +374,9 @@ export const listContributions = async (req, res) => {
     const [sortField, sortOrder] = sort.split(":");
 
     const contributions = await ContributionModel.findAll({
+      where : {
+          userId : req.Auth.id
+      },
       offset: parseInt(skip),
       limit: parseInt(limit),
      order: [[sortField || "createdAt", sortOrder?.toUpperCase() || "DESC"]],
@@ -445,3 +448,44 @@ export const deleteContribution = async (req, res) => {
   }
 };
 
+
+
+export const getUsers = async (req, res) => {
+  try {
+
+    const { skip = 0, limit = 18, sort = "createdAt:DESC" } = req.body;
+    const [sortField, sortOrder] = sort.split(":");
+
+    const condition = {
+      status : 'Active'
+    }
+
+    if(req.body.countryId){
+      condition.countryId = req.body.countryId
+    }
+
+    const users = await Users.findAll({
+      where : condition,
+      offset : skip,
+      limit : limit,
+      order : [[ sortField || 'createdAt', sortOrder || 'DESC' ]],
+      attributes: ['id', 'first_name', 'last_name','email','gender','profile'],
+      include: [{
+        model: CountryModel,
+        as: 'country',
+        attributes: ['name'],
+      }],
+    })
+
+    const totalMatchCount =  await Users.count({
+      where : condition,
+    })
+
+    console.log('totalMatchCount',totalMatchCount)
+    
+    __.res(res, { users, totalMatchCount }, 200);
+
+  } catch (error) {
+     __._throwError(res, error);
+  }
+}

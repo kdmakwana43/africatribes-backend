@@ -1,3 +1,4 @@
+import { Op, fn, col, where } from "sequelize";
 import { __ } from "../config/global.js";
 import BlogModel from "../models/BlogModel.js";
 
@@ -15,6 +16,14 @@ export const getBlogs = async (req, res) => {
       condition.trending = req.body.trending
     }
 
+    if (req.body.search && req.body.search.trim() !== '') {
+      condition.title = {
+        [Op.like]: `%${req.body.search}%`
+      };
+    }
+
+    console.log('condition',condition)
+
     const blogs = await BlogModel.findAll({
       where: condition,
       offset: parseInt(skip),
@@ -22,7 +31,17 @@ export const getBlogs = async (req, res) => {
       order: [[sortField || "createdAt", sortOrder?.toUpperCase() || "DESC"]],
     });
 
-    __.res(res, blogs, 200);
+    if(req.body.wantCount){
+
+      const totalMatchCount = await BlogModel.count({
+        where: condition,
+      });
+      __.res(res, {blogs, totalMatchCount}, 200);
+
+    } else {
+      __.res(res, blogs, 200);
+    }
+
   } catch (error) {
     __._throwError(res, error);
   }

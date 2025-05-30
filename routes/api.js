@@ -5,6 +5,7 @@ import {
   ContactController,
   SponsorController,
   BlogController,
+  PageController,
 } from "../controllers/__init__.js";
 
 import JWT from "jsonwebtoken";
@@ -29,6 +30,9 @@ Router.post("/user/reset/password", UserController.userResetPassword);
 Router.post("/countries", UserController.getCountries);
 Router.post("/newsletter/subscribe", UserController.subscribeNewsletter);
 
+
+Router.post("/users", UserController.getUsers);
+
 // contribution
 Router.post("/contribution/create", _auth, UserController.addContribution);
 Router.post("/contribution/details", _auth, UserController.getContribution);
@@ -49,6 +53,17 @@ Router.post("/get/sponsors", SponsorController.getSponsors);
 
 // Blogs
 Router.post("/blogs", BlogController.getBlogs);
+
+
+// Pages
+Router.post("/page/about-us", PageController.getAboutUsPage);
+Router.post("/page/faqs", PageController.getFAQs);
+Router.post("/page/pricing-options", PageController.getPricingOptions);
+Router.post("/page/privacy-policies", PageController.getPrivacyPolicies);
+Router.post("/page/terms-and-conditions", PageController.getTermsAndConditions);
+Router.post("/page/why-afrikatribs", PageController.getWhyAfrikaTribes);
+Router.post("/page/disclaimers", PageController.getDisclaimers);
+Router.post("/page/banners", PageController.getBanners);
 
 
 // middleware
