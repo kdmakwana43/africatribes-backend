@@ -5,7 +5,6 @@ import BlogModel from "../models/BlogModel.js";
 export const getBlogs = async (req, res) => {
   try {
     const { skip = 0, limit = 10, sort = "createdAt:DESC" } = req.body;
-
     const [sortField, sortOrder] = sort.split(":");
 
     const condition = {

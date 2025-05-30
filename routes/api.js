@@ -39,6 +39,9 @@ Router.post("/contribution/details", _auth, UserController.getContribution);
 Router.post("/contributions", _auth, UserController.listContributions);
 Router.post("/contribution/update", _auth, UserController.updateContribution);
 Router.post("/contribution/delete", _auth, UserController.deleteContribution);
+Router.post("/invitation/join-family", _auth, UserController.requestForJoinFamily);
+Router.post("/invitation/count", _auth, UserController.getPendingInvitationCount);
+Router.post("/invitations", _auth, UserController.getInvitationsList);
 
 
 // contact

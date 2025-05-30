@@ -2,6 +2,7 @@ import { __ } from "../config/global.js";
 import { getOtpTemplate, sendEmail } from "../config/node-mailer.js";
 import ContributionModel from "../models/ContributionModel.js";
 import CountryModel from "../models/CountryModel.js";
+import InvitationSchema from "../models/InvitationSchema.js";
 import NewsletterModel from "../models/NewsletterModel.js";
 import TokenModal from "../models/TokenModal.js";
 
@@ -469,6 +470,101 @@ export const getUsers = async (req, res) => {
     console.log('totalMatchCount',totalMatchCount)
     
     __.res(res, { users, totalMatchCount }, 200);
+
+  } catch (error) {
+     __._throwError(res, error);
+  }
+}
+
+
+
+export const requestForJoinFamily = async (req, res) => {
+  try {
+
+    const { userId } = req.body
+    if(!userId) throw new Error('Invalid arguments')
+
+    const condition = {
+      id: userId,
+    };
+
+    const isExistUser = await Users.findOne({ where: condition });
+
+    if(!isExistUser) throw new Error('Oops! there are no any user found!')
+    if(isExistUser.status !== 'Active') throw new Error('This user is not more active!')
+
+    // Check existing invitations
+
+    const invitationCondition = {
+      requestedTo : userId,
+      userId : req.Auth.id
+    }
+    const isExistInvitation = await InvitationSchema.findOne({ where: invitationCondition }); 
+
+    if(isExistInvitation && isExistInvitation.status == 'Pending') throw new Error('You already requested to join family! Please wait for accept or reject.') 
+    if(isExistInvitation && isExistInvitation.status == 'Approved') throw new Error('You already joined this family!') 
+    if(isExistInvitation && isExistInvitation.status == 'Rejected') throw new Error('The user rejected your request already!') 
+
+
+    if(isExistInvitation) throw new Error('Join request already sent!')  
+
+
+
+    const data = {
+      userId : req.Auth.id,
+      requestedTo : userId,
+      status : 'Pending'
+    }
+
+    await InvitationSchema.create(data)
+    __.res(res, `Request send successfully to ${isExistUser.first_name} ${isExistUser.last_name}`, 200);
+    
+
+  } catch (error) {
+     __._throwError(res, error);
+  }
+}
+
+
+export const getInvitationsList = async (req, res) => {
+  try {
+
+
+    const { skip = 0, limit = 10, sort = "createdAt:DESC" } = req.body;
+    const [sortField, sortOrder] = sort.split(":");
+   
+    const condition = {
+      requestedTo: req.Auth.id,
+      status : 'Pending'
+    };
+    const invitations = await InvitationSchema.findAll({ 
+      where: condition,
+      offset : parseInt(skip),
+      limit : parseInt(limit),
+      order : [ [ sortField || 'createdAt', sortOrder || 'DESC' ] ]
+    }); 
+     if(req.body.wantCount){
+      const totalMatchCount = await InvitationSchema.count({ where: condition }); 
+      __.res(res,{invitations,totalMatchCount}, 200);
+
+     } else {
+      __.res(res,invitations, 200);
+     }
+
+  } catch (error) {
+     __._throwError(res, error);
+  }
+}
+
+export const getPendingInvitationCount = async (req, res) => {
+  try {
+
+    const condition = {
+      requestedTo: req.Auth.id,
+      status : 'Pending'
+    };
+    const totalMatchCount = await InvitationSchema.count({ where: condition }); 
+    __.res(res,totalMatchCount, 200);
 
   } catch (error) {
      __._throwError(res, error);
