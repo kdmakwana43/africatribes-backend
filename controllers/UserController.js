@@ -53,23 +53,22 @@ export const userRegister = async (req, res) => {
 
     await Users.create(payload);
 
-
-    if(req.body.subscribeNewsletter){
-      
+    if (req.body.subscribeNewsletter) {
       try {
-        const isExist = await NewsletterModel.findOne({where : {
-          email : req.body.email.toLowerCase()
-        }})
-      if(!isExist){
-        const data = {
-          email : req.body.email.toLowerCase()
+        const isExist = await NewsletterModel.findOne({
+          where: {
+            email: req.body.email.toLowerCase(),
+          },
+        });
+        if (!isExist) {
+          const data = {
+            email: req.body.email.toLowerCase(),
+          };
+          await NewsletterModel.create(data);
         }
-        await NewsletterModel.create(data);
-      }
       } catch (error) {
-        console.log('error',error)
+        console.log("error", error);
       }
-
     }
 
     __.res(res, "User registered successfully.", 200);
@@ -139,9 +138,8 @@ export const userProfileUpdate = async (req, res) => {
       }
     }
 
-
-    if(req.file){
-      req.body.profile = `/images/${req.file.filename}`
+    if (req.file) {
+      req.body.profile = `/images/${req.file.filename}`;
     }
 
     const NOT_ALLOW_UPDATE = [
@@ -199,7 +197,7 @@ export const userPasswordUpdate = async (req, res) => {
 export const uploadFile = async (req, res) => {
   try {
     if (req.file) {
-    __.res(res,  "/images/" + req.file.filename, 200);
+      __.res(res, "/images/" + req.file.filename, 200);
     } else {
       throw new Error("Oops! Failed to upload File or image.");
     }
@@ -231,6 +229,7 @@ export const userForgotPassword = async (req, res) => {
     };
 
     await TokenModal.create(payload);
+    __.res(res, "Password reset link has been sent to your email!", 200);
   } catch (error) {
     __._throwError(res, error);
   }
@@ -284,11 +283,10 @@ export const getUserProfile = async (req, res) => {
   }
 };
 
-
 export const getCountries = async (req, res) => {
   try {
     const condition = {
-      status : 'Active'
+      status: "Active",
     };
 
     const countries = await CountryModel.findAll({ where: condition });
@@ -299,30 +297,26 @@ export const getCountries = async (req, res) => {
   }
 };
 
-
-
 export const subscribeNewsletter = async (req, res) => {
   try {
-
-     __.validation(["email"], req.body);
+    __.validation(["email"], req.body);
 
     const condition = {
-      email : req.body.email.toLowerCase()
+      email: req.body.email.toLowerCase(),
     };
 
-    const isExist = await NewsletterModel.findOne({where : condition})
-    if(isExist) throw new Error('You already subscribed our newsletters')
+    const isExist = await NewsletterModel.findOne({ where: condition });
+    if (isExist) throw new Error("You already subscribed our newsletters");
 
     const data = {
-      email : req.body.email.toLowerCase()
-    }
+      email: req.body.email.toLowerCase(),
+    };
     await NewsletterModel.create(data);
-    __.res(res, 'Thank you for subscribe newsletter!', 200);
+    __.res(res, "Thank you for subscribe newsletter!", 200);
   } catch (error) {
     __._throwError(res, error);
   }
 };
-
 
 export const addContribution = async (req, res) => {
   try {
@@ -331,7 +325,7 @@ export const addContribution = async (req, res) => {
     const { title, category, description } = req.body;
 
     const payload = {
-      userId : req.Auth.id,
+      userId: req.Auth.id,
       title,
       category,
       description,
@@ -345,19 +339,17 @@ export const addContribution = async (req, res) => {
   }
 };
 
-
 export const getContribution = async (req, res) => {
   try {
-
     __.validation(["id"], req.body);
     const { id } = req.body;
 
     const condition = {
-      id : id,
-      userId : req.Auth.id
-    }
+      id: id,
+      userId: req.Auth.id,
+    };
 
-    const contribution = await ContributionModel.findOne({where : condition});
+    const contribution = await ContributionModel.findOne({ where: condition });
     if (!contribution) throw new Error("Contribution not found.");
 
     __.res(res, contribution, 200);
@@ -366,10 +358,9 @@ export const getContribution = async (req, res) => {
   }
 };
 
-
 export const listContributions = async (req, res) => {
   try {
-    const { skip = 0, limit = 10, sort = "createdAt:DESC"} = req.query;
+    const { skip = 0, limit = 10, sort = "createdAt:DESC" } = req.query;
 
     const [sortField, sortOrder] = sort.split(":");
 
@@ -379,7 +370,7 @@ export const listContributions = async (req, res) => {
       },
       offset: parseInt(skip),
       limit: parseInt(limit),
-     order: [[sortField || "createdAt", sortOrder?.toUpperCase() || "DESC"]],
+      order: [[sortField || "createdAt", sortOrder?.toUpperCase() || "DESC"]],
     });
 
     __.res(res, contributions, 200);
@@ -388,14 +379,11 @@ export const listContributions = async (req, res) => {
   }
 };
 
-
 export const updateContribution = async (req, res) => {
   try {
-
     __.validation(["id"], req.body);
 
     const { id } = req.body;
-
 
     const condition = {
       id: id,
@@ -424,20 +412,18 @@ export const updateContribution = async (req, res) => {
   }
 };
 
-
 export const deleteContribution = async (req, res) => {
   try {
-
     __.validation(["id"], req.body);
 
     const { id } = req.body;
 
-     const condition = {
-      id : id,
-      userId : req.Auth.id
-    }
+    const condition = {
+      id: id,
+      userId: req.Auth.id,
+    };
 
-    const contribution = await ContributionModel.findOne({where : condition});
+    const contribution = await ContributionModel.findOne({ where: condition });
     if (!contribution) throw new Error("Contribution not found.");
 
     await contribution.destroy();
@@ -447,7 +433,6 @@ export const deleteContribution = async (req, res) => {
     __._throwError(res, error);
   }
 };
-
 
 
 export const getUsers = async (req, res) => {
