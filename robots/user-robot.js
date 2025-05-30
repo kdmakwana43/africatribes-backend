@@ -22,12 +22,13 @@ const insertFakeUser = async () => {
       tribe: faker.word.words(1),
       village: faker.location.city(),
 
-      profile:faker.image.url(),
+      // profile:faker.image.url(),
         // faker.image.urlLoremFlickr({
         //   width: 100,
         //   height: 100,
         //   category: ["africa", "people"],
         // }),
+        profile: `https://randomuser.me/api/portraits/${gender === "male" ? "men" : "women"}/${faker.number.int({ min: 10, max: 99 })}.jpg`,
 
       alias: faker.internet.userName(),
       status: "Active",
