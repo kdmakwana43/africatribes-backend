@@ -150,4 +150,5 @@ Users.belongsTo(CountryModel, {
   as: "country",
 });
 
+
 export default Users;

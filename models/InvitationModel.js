@@ -2,7 +2,7 @@ import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
 import Users from "./UserModel.js";
 
-const InvitationSchema = sequelize.define(
+const InvitationModel = sequelize.define(
   "Invitations",
   {
     userId: {
@@ -33,10 +33,6 @@ const InvitationSchema = sequelize.define(
         },
       },
     },
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
   },
   {
     tableName: "Invitations",
@@ -45,9 +41,9 @@ const InvitationSchema = sequelize.define(
 );
 
 // Associations
-InvitationSchema.belongsTo(Users, {
+InvitationModel.belongsTo(Users, {
   foreignKey: "userId",
   as: "user",
 });
 
-export default InvitationSchema;
+export default InvitationModel;

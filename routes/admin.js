@@ -23,6 +23,8 @@ import TermsAndConditionPageModel from "../models/TermsAndConditionPageModel.js"
 import FAQModel from "../models/FAQModel.js";
 import DisclaimerPageModel from "../models/DisclaimerPageModel.js";
 import BannerModel from "../models/BannerModel.js";
+import InvitationModel from "../models/InvitationModel.js";
+import FamilyTreesModel from "../models/FamilyTreesModel.js";
 
 AdminJS.registerAdapter(AdminJSMongoose);
 
@@ -129,10 +131,41 @@ const adminJs = new AdminJS({
     softwareBrothers: false,
   },
   resources: [
+    
+    
     {
       resource: Users,
       options: userResourceOptions,
     },
+    {
+      resource: ContributionModel,
+      options: {
+        parent: {
+          name: "Users",
+        },
+        listProperties: ["createdAt", "userId", "title", "category"],
+      },
+    },
+    {
+      resource: InvitationModel,
+      options: {
+        parent: {
+          name: "Users",
+        },
+        listProperties: ["createdAt", "userId", "requestedTo", "status"],
+      },
+    },
+    {
+      resource: FamilyTreesModel,
+      options: {
+        parent: {
+          name: "Users",
+        },
+        listProperties: ["createdAt", "userId", "first_name", "relationship"],
+      },
+    },
+
+
     {
       resource: SponsorModel,
       options: {
@@ -232,15 +265,7 @@ const adminJs = new AdminJS({
         ],
       },
     },
-    {
-      resource: ContributionModel,
-      options: {
-        parent: {
-          name: "Users",
-        },
-        listProperties: ["createdAt", "userId", "title", "category"],
-      },
-    },
+    
     {
       resource: AboutUsModel,
       options: {
