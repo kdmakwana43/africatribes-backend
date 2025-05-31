@@ -2,6 +2,7 @@ import { __ } from "../config/global.js";
 import { getOtpTemplate, sendEmail } from "../config/node-mailer.js";
 import ContributionModel from "../models/ContributionModel.js";
 import CountryModel from "../models/CountryModel.js";
+import FamilyTreesModel from "../models/FamilyTreesModel.js";
 import InvitationModel from "../models/InvitationModel.js";
 import NewsletterModel from "../models/NewsletterModel.js";
 import TokenModal from "../models/TokenModal.js";
@@ -9,7 +10,6 @@ import TokenModal from "../models/TokenModal.js";
 import Users from "../models/UserModel.js";
 import JWT from "jsonwebtoken";
 import { Op } from "sequelize";
-
 export const userRegister = async (req, res) => {
   try {
     __.validation(
@@ -52,7 +52,27 @@ export const userRegister = async (req, res) => {
       village: req.body.village || null,
     };
 
-    await Users.create(payload);
+    const user = await Users.create(payload);
+
+    // Create family node
+    try {
+      
+      const member = {
+        userId : user.id,
+        first_name : user.first_name,
+        surname : user.last_name,
+        dob :  user.dob,
+        birthTown : user.hometown,
+        relationship : 'Myself',
+        isOwner : true
+      }
+      await FamilyTreesModel.create(member);
+      console.log('Member created')
+
+    } catch (error) {
+      console.log('Oops! unable to create family member',error)
+    }
+
 
     if (req.body.subscribeNewsletter) {
       try {

@@ -57,6 +57,8 @@ Router.post("/family/tree",_auth,FamilyTreeController.getFamilyTrees);
 Router.post("/family/member/delete",_auth,FamilyTreeController.deleteFamilyNode);
 Router.post("/family/member/update",_auth,upload.single("profile"),FamilyTreeController.updateFamilyNode);
 Router.post("/family/member/move",_auth,FamilyTreeController.moveChildNode);
+Router.post("/family/member/create-parent",_auth,upload.single("profile"),FamilyTreeController.createParentNode);
+Router.post("/family/member/create-sibling",_auth,upload.single("profile"),FamilyTreeController.createSibling);
 
 // contact
 Router.post("/contact", ContactController.addContact);

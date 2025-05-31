@@ -34,8 +34,8 @@ app.listen(PORT, "0.0.0.0", async () => {
 
 
   // Robot
-  // startBlogRobot()
-  // startUserRobot();
+  startBlogRobot()
+  startUserRobot();
   
 
 });

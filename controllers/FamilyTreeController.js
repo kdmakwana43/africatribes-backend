@@ -4,6 +4,31 @@ import FamilyTreesModel from "../models/FamilyTreesModel.js";
 import moment from 'moment'
 
 
+const prepareMemberData = (body,data = {}) => {
+  const allowedFields = ["surname", "dob", "dod","birthTown","profession","relationship"];
+  allowedFields.forEach((field) => {
+    if (body[field]) {
+      
+      console.log('field',field)
+      
+      if ((field === 'dob' || field === 'dod') && body[field] !== '') {
+        const date = moment(body[field], 'YYYY-MM-DD', true); // strict parsing
+        if (date.isValid()) {
+          body[field] = date.format('YYYY-MM-DD');
+          data[field] = body[field];
+        } else {
+          delete body[field];
+        }
+      } 
+
+      data[field] = body[field];
+    }
+  });
+
+  return data
+
+}
+
 function buildFamilyTree(data, parentId = null) {
   return data
     .filter(member => member.parentId === parentId)
@@ -13,10 +38,10 @@ function buildFamilyTree(data, parentId = null) {
     }));
 }
 
+
 export const addFamilyNode = async (req, res) => {
   try {
 
-    console.log('req.body',req.body)
 
     __.validation(["first_name"], req.body);
 
@@ -33,12 +58,17 @@ export const addFamilyNode = async (req, res) => {
     allowedFields.forEach((field) => {
       if (req.body[field]) {
         
-        if((field == 'dob' || field == 'dod') && req.body[field] != ''){
-          req.body[field] = moment(req.body[field],'YYYY-MM-DD').toDate();
-          // req.body[field] = req.body[field]
-        } else {
-          delete req.body[field]
-        }
+        console.log('field',field)
+        
+       if ((field === 'dob' || field === 'dod') && req.body[field] !== '') {
+          const date = moment(req.body[field], 'YYYY-MM-DD', true); // strict parsing
+          if (date.isValid()) {
+            req.body[field] = date.format('YYYY-MM-DD');
+            data[field] = req.body[field];
+          } else {
+            delete req.body[field];
+          }
+        } 
 
         data[field] = req.body[field];
       }
@@ -47,6 +77,8 @@ export const addFamilyNode = async (req, res) => {
     if (req.file) {
       data.profile = `/images/${req.file.filename}`;
     }
+
+    console.log('data',data)
 
     const createdNode = await FamilyTreesModel.create(data);
     if(!createdNode) throw new Error('Oops! Failed to create this member! Please try again')
@@ -73,6 +105,8 @@ export const getFamilyTrees = async (req, res) => {
       where: condition,
       order: [['id', 'ASC']],
     });
+
+    console.log('flatMembers',flatMembers.length)
 
     // Build tree
     const tree = buildFamilyTree(flatMembers);
@@ -129,27 +163,34 @@ export const updateFamilyNode = async (req, res) => {
     if(!node) throw new Error('Oops! unable to find this member!')
 
    const allowedFields = ['first_name',"surname", "dob", "dod","birthTown","profession","relationship"];
-    const updateData = {};
 
     allowedFields.forEach((field) => {
-      if (req.body[field]) {
+      if (req.body[field] && req.body[field] != '') {
 
         if((field == 'dob' || field == 'dod') && req.body[field] != ''){
-          req.body[field] = moment(req.body[field],'YYYY-MM-DD').toDate();
-          // req.body[field] = req.body[field]
+          const date = moment(req.body[field], 'YYYY-MM-DD', true);
+          if (date.isValid()) {
+            node[field] =  date.format('YYYY-MM-DD');
+          } else {
+            delete req.body[field];
+          }
+          
         } else {
-          delete req.body[field]
+          node[field] = req.body[field];
         }
-        updateData[field] = req.body[field];
       }
     });
 
     if (req.file) {
-      updateData.profile = `/images/${req.file.filename}`;
+      node.profile = `/images/${req.file.filename}`;
     }
 
-    await node.update(updateData);
-    __.res(res, node, 200);
+    if(req.body.profile == 'null'){
+      node.profile = ''
+    }
+
+    await node.save();
+    __.res(res, 'Member updated successfully!', 200);
   
   } catch (error) {
     __._throwError(res, error);
@@ -191,3 +232,94 @@ export const moveChildNode = async (req, res) => {
     __._throwError(res, error);
   }
 };
+
+
+
+export const createParentNode = async (req, res) => {
+  try {
+
+
+    __.validation(["first_name"], req.body);
+
+
+     const conditionRoot = { 
+      userId : req.Auth.id,
+      parentId : null,
+    }
+
+    const rootParent =  await FamilyTreesModel.findOne({where : conditionRoot,order: [['id', 'ASC']]})
+    if(!rootParent) throw new Error('There are no any node available')
+
+ 
+    var data = {
+      first_name: req.body.first_name,
+      userId: req.Auth.id,
+      parentId : null
+    };
+
+    
+    data = prepareMemberData(req.body,data)
+    if (req.file) {
+      data.profile = `/images/${req.file.filename}`;
+    }
+
+    console.log('data',data)
+
+    const createdNode = await FamilyTreesModel.create(data);
+    if(!createdNode) throw new Error('Oops! Failed to create this member! Please try again')
+
+    // Update current user parent
+    rootParent.parentId = createdNode.id
+    await rootParent.save()
+
+    __.res(
+      res,
+      createdNode.toJSON(),
+      200
+    );
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};
+
+
+
+export const createSibling = async (req, res) => {
+  try {
+
+    __.validation(["first_name",'id'], req.body);
+
+
+     const conditionRoot = { 
+      userId : req.Auth.id,
+      id : req.body
+    }
+
+    const currentMember =  await FamilyTreesModel.findOne({where : conditionRoot})
+    if(!currentMember) throw new Error('Oops! Selected member not found')
+
+ 
+    var data = {
+      first_name: req.body.first_name,
+      userId: req.Auth.id,
+      parentId : currentMember.parentId
+    };
+
+    data = prepareMemberData(req.body,data)
+    if (req.file) {
+      data.profile = `/images/${req.file.filename}`;
+    }
+
+    const createdNode = await FamilyTreesModel.create(data);
+    if(!createdNode) throw new Error('Oops! Failed to create this member! Please try again')
+
+    __.res(
+      res,
+      createdNode.toJSON(),
+      200
+    );
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};
+

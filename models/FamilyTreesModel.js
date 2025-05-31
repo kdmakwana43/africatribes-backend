@@ -42,7 +42,7 @@ const FamilyTreesModel = sequelize.define(
       validate: {
         len: {
           args: [2, 50],
-          msg: "First name must be between 1 and 50 characters long.",
+          msg: "Surname must be between 1 and 50 characters long.",
         },
       },
     },
@@ -66,7 +66,6 @@ const FamilyTreesModel = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
-   
 
     profile: {
       type: DataTypes.STRING,
@@ -81,6 +80,7 @@ const FamilyTreesModel = sequelize.define(
 
     relationship: {
       type: DataTypes.ENUM(
+        "",
         "Myself",
         "Spouse",
         "Daughter",
@@ -105,8 +105,15 @@ const FamilyTreesModel = sequelize.define(
         "Sister In Law"
       ),
       allowNull: false,
-      defaultValue: 'Myself',
-    }
+      defaultValue: '',
+    },
+
+
+    isOwner: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
     
   },
   {
