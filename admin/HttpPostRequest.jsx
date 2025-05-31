@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const baseUrl = "http://localhost:8080";
+const baseUrl = "http://68.183.26.232:8080";
 const API_URL = `${baseUrl}/api/v1`;
 
 const HttpPostRequest = async (path, data = {}) => {
