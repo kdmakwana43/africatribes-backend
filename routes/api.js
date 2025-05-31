@@ -6,6 +6,7 @@ import {
   SponsorController,
   BlogController,
   PageController,
+  FamilyTreeController,
 } from "../controllers/__init__.js";
 
 import JWT from "jsonwebtoken";
@@ -44,6 +45,18 @@ Router.post("/invitation/count", _auth, UserController.getPendingInvitationCount
 Router.post("/invitations", _auth, UserController.getInvitationsList);
 Router.post("/invitation/update", _auth, UserController.acceptOrRejectInvitation);
 
+
+// FamilyTree
+Router.post(
+  "/family/create",
+  _auth,
+  upload.single("profile"),
+  FamilyTreeController.addFamilyNode
+);
+Router.post("/family/tree",_auth,FamilyTreeController.getFamilyTrees);
+Router.post("/family/member/delete",_auth,FamilyTreeController.deleteFamilyNode);
+Router.post("/family/member/update",_auth,upload.single("profile"),FamilyTreeController.updateFamilyNode);
+Router.post("/family/member/move",_auth,FamilyTreeController.moveChildNode);
 
 // contact
 Router.post("/contact", ContactController.addContact);

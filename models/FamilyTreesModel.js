@@ -5,6 +5,17 @@ import Users from "./UserModel.js";
 const FamilyTreesModel = sequelize.define(
   "FamilyTrees",
   {
+    first_name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        len: {
+          args: [2, 50],
+          msg: "First name must be between 1 and 50 characters long.",
+        },
+      },
+    },
+
     userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -17,24 +28,14 @@ const FamilyTreesModel = sequelize.define(
     parentId: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      // references: {
-      //   model: "FamilyTrees", 
-      //   key: "id",
-      // },
-      // onDelete: "CASCADE",
-    },
-
-    first_name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        len: {
-          args: [2, 50],
-          msg: "First name must be between 1 and 50 characters long.",
-        },
+      references: {
+        model: "FamilyTrees", 
+        key: "id",
       },
+      onDelete: "CASCADE",
     },
 
+    
     surname: {
       type: DataTypes.STRING,
       allowNull: true,
@@ -59,23 +60,11 @@ const FamilyTreesModel = sequelize.define(
     birthTown: {
       type: DataTypes.STRING,
       allowNull: true,
-      validate: {
-        len: {
-          args: [2, 50],
-          msg: "First name must be between 1 and 50 characters long.",
-        },
-      },
     },
 
     profession: {
       type: DataTypes.STRING,
       allowNull: true,
-      validate: {
-        len: {
-          args: [2, 50],
-          msg: "First name must be between 1 and 50 characters long.",
-        },
-      },
     },
    
 
@@ -125,6 +114,16 @@ const FamilyTreesModel = sequelize.define(
     timestamps: true,
   }
 );
+
+FamilyTreesModel.hasMany(FamilyTreesModel, {
+  foreignKey: 'parentId',
+  as: 'children'
+});
+
+FamilyTreesModel.belongsTo(FamilyTreesModel, {
+  foreignKey: 'parentId',
+  as: 'parent'
+});
 
 
 export default FamilyTreesModel;
