@@ -1,0 +1,24 @@
+name: Production Environment 
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Deploy to Server
+        run: |
+          sudo apt-get install -y sshpass
+          sshpass -p "${{ secrets.PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.HOST }} <<EOF
+            cd /var/www/africatribes-backend
+            git pull origin master
+            cp .env.production .env
+            pm2 restart backend
+          EOF

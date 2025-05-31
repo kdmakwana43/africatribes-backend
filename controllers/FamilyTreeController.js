@@ -34,7 +34,10 @@ export const addFamilyNode = async (req, res) => {
       if (req.body[field]) {
         
         if((field == 'dob' || field == 'dod') && req.body[field] != ''){
-          req.body[field] = moment(req.body[field],'DD/MM/YYYY').toDate();
+          req.body[field] = moment(req.body[field],'YYYY-MM-DD').toDate();
+          // req.body[field] = req.body[field]
+        } else {
+          delete req.body[field]
         }
 
         data[field] = req.body[field];
@@ -132,7 +135,10 @@ export const updateFamilyNode = async (req, res) => {
       if (req.body[field]) {
 
         if((field == 'dob' || field == 'dod') && req.body[field] != ''){
-          req.body[field] = moment(req.body[field],'DD/MM/YYYY').toDate();
+          req.body[field] = moment(req.body[field],'YYYY-MM-DD').toDate();
+          // req.body[field] = req.body[field]
+        } else {
+          delete req.body[field]
         }
         updateData[field] = req.body[field];
       }
