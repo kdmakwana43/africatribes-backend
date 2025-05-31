@@ -83,3 +83,6 @@ bower_components/
 # Windows system files
 Thumbs.db
 ehthumbs.db
+
+
+public/images/*
