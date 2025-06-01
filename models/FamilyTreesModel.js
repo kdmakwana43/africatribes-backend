@@ -114,6 +114,19 @@ const FamilyTreesModel = sequelize.define(
       allowNull: false,
       defaultValue: false,
     },
+
+    // Spouse
+    spouses: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      get() {
+        const rawValue = this.getDataValue('spouses');
+        return rawValue ? JSON.parse(rawValue) : [];
+      },
+      set(val) {
+        this.setDataValue('spouses', JSON.stringify(val));
+      }
+    }
     
   },
   {

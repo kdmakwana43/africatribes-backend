@@ -25,6 +25,7 @@ import DisclaimerPageModel from "../models/DisclaimerPageModel.js";
 import BannerModel from "../models/BannerModel.js";
 import InvitationModel from "../models/InvitationModel.js";
 import FamilyTreesModel from "../models/FamilyTreesModel.js";
+import ContactUsPageModel from "../models/ContactUsPageModel.js";
 
 AdminJS.registerAdapter(AdminJSMongoose);
 
@@ -363,6 +364,22 @@ const adminJs = new AdminJS({
         },
       },
     },
+
+
+    {
+      resource: ContactUsPageModel,
+      options: {
+        parent: {
+          name: "Pages",
+        },
+        properties: {
+          content: {
+            type: "richtext",
+          },
+        },
+      },
+    },
+
     {
       resource: BannerModel,
       options: {

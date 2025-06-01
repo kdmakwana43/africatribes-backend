@@ -45,7 +45,7 @@ export const addFamilyNode = async (req, res) => {
 
     __.validation(["first_name"], req.body);
 
-    const data = {
+    var data = {
       first_name: req.body.first_name,
       userId: req.Auth.id,
     };
@@ -54,38 +54,46 @@ export const addFamilyNode = async (req, res) => {
       data.parentId = req.body.parent
     }
 
-    const allowedFields = ["surname", "dob", "dod","birthTown","profession","relationship"];
-    allowedFields.forEach((field) => {
-      if (req.body[field]) {
-        
-        console.log('field',field)
-        
-       if ((field === 'dob' || field === 'dod') && req.body[field] !== '') {
-          const date = moment(req.body[field], 'YYYY-MM-DD', true); // strict parsing
-          if (date.isValid()) {
-            req.body[field] = date.format('YYYY-MM-DD');
-            data[field] = req.body[field];
-          } else {
-            delete req.body[field];
-          }
-        } 
-
-        data[field] = req.body[field];
-      }
-    });
 
     if (req.file) {
       data.profile = `/images/${req.file.filename}`;
     }
 
-    console.log('data',data)
+    const parentMemberId = req.body.parent || null
 
-    const createdNode = await FamilyTreesModel.create(data);
-    if(!createdNode) throw new Error('Oops! Failed to create this member! Please try again')
+     const conditionRoot = { 
+      userId : req.Auth.id,
+      parentId : parentMemberId,
+    }
 
+    const rootParent =  await FamilyTreesModel.findOne({where : conditionRoot,order: [['id', 'ASC']]})
+    if(!rootParent) throw new Error('There are no any node available')
+
+    var createdNode = null;
+
+
+    switch(req.body.relationship){
+
+      case 'Spouse':
+        const spouses =  rootParent.spouses || [];
+        const newSpouse = prepareMemberData(req.body,data)
+        newSpouse.id = spouses.length + 1;
+        rootParent.spouses = [...spouses, newSpouse]
+        rootParent.save()
+
+        createdNode = rootParent.toJSON()
+        break;
+
+      default:
+        data = prepareMemberData(req.body,data)
+        createdNode = await FamilyTreesModel.create(data);
+        if(!createdNode) throw new Error('Oops! Failed to create this member! Please try again')
+
+    }
+  
     __.res(
       res,
-      createdNode.toJSON(),
+      createdNode,
       200
     );
   } catch (error) {

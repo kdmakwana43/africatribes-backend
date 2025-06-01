@@ -82,6 +82,7 @@ Router.post("/page/privacy-policies", PageController.getPrivacyPolicies);
 Router.post("/page/terms-and-conditions", PageController.getTermsAndConditions);
 Router.post("/page/why-afrikatribs", PageController.getWhyAfrikaTribes);
 Router.post("/page/disclaimers", PageController.getDisclaimers);
+Router.post("/page/contact-us", PageController.getContactUsPage);
 Router.post("/page/banners", PageController.getBanners);
 
 

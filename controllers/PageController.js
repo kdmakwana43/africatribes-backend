@@ -1,6 +1,7 @@
 import { __ } from "../config/global.js";
 import AboutUsModel from "../models/AboutUsModel.js";
 import BannerModel from "../models/BannerModel.js";
+import ContactUsPageModel from "../models/ContactUsPageModel.js";
 import DisclaimerPageModel from "../models/DisclaimerPageModel.js";
 import FAQModel from "../models/FAQModel.js";
 import PricingOptionPageModel from "../models/PricingOptionPageModel.js";
@@ -99,6 +100,20 @@ export const getDisclaimers = async (req, res) => {
   try {
 
     const pageData = await DisclaimerPageModel.findOne({
+      order: [["createdAt", "DESC"]]
+    });
+
+    __.res(res, pageData, 200);
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};
+
+
+export const getContactUsPage = async (req, res) => {
+  try {
+
+    const pageData = await ContactUsPageModel.findOne({
       order: [["createdAt", "DESC"]]
     });
 

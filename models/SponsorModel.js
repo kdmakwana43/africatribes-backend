@@ -26,6 +26,19 @@ const SponsorModel = sequelize.define(
         },
       },
     },
+    url: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue : '',
+      validate: {
+        notNull: { msg: "url is required" },
+        notEmpty: { msg: "url should not be empty" },
+        len: {
+          args: [3, 255],
+          msg: "url must be between 3 and 255 characters",
+        },
+      },
+    },
     status: {
       type: DataTypes.ENUM('Active', 'Deactivate'),
       allowNull: false,
