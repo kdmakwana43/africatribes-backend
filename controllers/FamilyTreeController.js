@@ -59,29 +59,28 @@ export const addFamilyNode = async (req, res) => {
       data.profile = `/images/${req.file.filename}`;
     }
 
-    const parentMemberId = req.body.parent || null
-
-     const conditionRoot = { 
-      userId : req.Auth.id,
-      parentId : parentMemberId,
-    }
-
-    const rootParent =  await FamilyTreesModel.findOne({where : conditionRoot,order: [['id', 'ASC']]})
-    if(!rootParent) throw new Error('There are no any node available')
-
     var createdNode = null;
-
-
     switch(req.body.relationship){
 
       case 'Spouse':
-        const spouses =  rootParent.spouses || [];
-        const newSpouse = prepareMemberData(req.body,data)
-        newSpouse.id = spouses.length + 1;
-        rootParent.spouses = [...spouses, newSpouse]
-        rootParent.save()
 
-        createdNode = rootParent.toJSON()
+          const parentMemberId = req.body.parent || null
+          const conditionRoot = { 
+            userId : req.Auth.id,
+            parentId : parentMemberId,
+          }
+
+          const rootParent =  await FamilyTreesModel.findOne({where : conditionRoot,order: [['id', 'ASC']]})
+          if(!rootParent) throw new Error('There are no any node available')
+
+
+          const spouses =  rootParent.spouses || [];
+          const newSpouse = prepareMemberData(req.body,data)
+          newSpouse.id = spouses.length + 1;
+          rootParent.spouses = [...spouses, newSpouse]
+          rootParent.save()
+
+          createdNode = rootParent.toJSON()
         break;
 
       default:
