@@ -44,6 +44,8 @@ Router.post("/invitation/join-family", _auth, UserController.requestForJoinFamil
 Router.post("/invitation/count", _auth, UserController.getPendingInvitationCount);
 Router.post("/invitations", _auth, UserController.getInvitationsList);
 Router.post("/invitation/update", _auth, UserController.acceptOrRejectInvitation);
+Router.post("/invitations/accepted", _auth, UserController.getAcceptedInvitations);
+Router.post("/invitation/delete", _auth, UserController.deleteInvitation);
 
 
 // FamilyTree

@@ -470,6 +470,13 @@ export const getUsers = async (req, res) => {
       condition.countryId = req.body.countryId
     }
 
+
+    if (req.body.char && req.body.char.trim() !== '') {
+        condition.first_name = {
+          [Op.like]: `${req.body.char}%`
+        };
+      }
+
     const users = await Users.findAll({
       where : condition,
       offset : skip,
@@ -630,3 +637,63 @@ export const acceptOrRejectInvitation = async (req, res) => {
      __._throwError(res, error);
   }
 }
+
+
+export const getAcceptedInvitations = async (req, res) => {
+  try {
+
+
+    const { skip = 0, limit = 10, sort = "createdAt:DESC" } = req.body;
+    const [sortField, sortOrder] = sort.split(":");
+   
+    const condition = {
+      requestedTo: req.Auth.id,
+      status : 'Approved'
+    };
+    const invitations = await InvitationModel.findAll({ 
+      where: condition,
+      offset : parseInt(skip),
+      limit : parseInt(limit),
+      order : [ [ sortField || 'createdAt', sortOrder || 'DESC' ] ],
+      include : [
+        {
+          model : Users,
+          as : 'user',
+          attributes : ['first_name','last_name','profile','gender']
+        }
+      ]
+    }); 
+     if(req.body.wantCount){
+      const totalMatchCount = await InvitationModel.count({ where: condition }); 
+      __.res(res,{invitations,totalMatchCount}, 200);
+
+     } else {
+      __.res(res,invitations, 200);
+     }
+
+  } catch (error) {
+     __._throwError(res, error);
+  }
+}
+
+export const deleteInvitation = async (req, res) => {
+  try {
+    __.validation(["id"], req.body);
+
+    const { id } = req.body;
+
+    const condition = {
+      id: id,
+      requestedTo: req.Auth.id,
+    };
+
+    const invitation = await InvitationModel.findOne({ where: condition });
+    if (!invitation) throw new Error("invitation not found.");
+
+    await invitation.destroy();
+
+    __.res(res, "invitation deleted successfully.", 200);
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};
