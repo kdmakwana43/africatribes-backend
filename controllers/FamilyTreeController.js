@@ -182,11 +182,7 @@ export const getFamilyTrees = async (req, res) => {
       if(!user) throw new Error('User not found! Please check the user id and try again.')
 
       // Check its accepted 
-      const isAccepted = await InvitationModel.findOne({where : {
-        userId: req.body.userId,
-        requestedTo: req.Auth.id,
-        status: 'Approved'
-      }})
+     const isAccepted = await InvitationModel.isAccepted(req.body.userId, req.Auth.id);
 
       if(!isAccepted && user.allowPublicView == false) throw new Error('This user profile is private! You can not view this family tree.')
       condition.userId = req.body.userId
