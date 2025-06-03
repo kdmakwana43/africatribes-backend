@@ -66,7 +66,7 @@ Router.post("/family/member/update",_auth,_familyPermission,upload.single("profi
 Router.post("/family/member/move",_auth,_familyPermission,FamilyTreeController.moveChildNode);
 Router.post("/family/member/create-parent",_auth,_familyPermission,upload.single("profile"),FamilyTreeController.createParentNode);
 Router.post("/family/member/create-sibling",_auth,_familyPermission,upload.single("profile"),FamilyTreeController.createSibling);
-Router.post("/family/members",_auth,FamilyTreeController.getFamilyMembers);
+Router.post("/family/members",_auth,_familyPermission,FamilyTreeController.getFamilyMembers);
 
 
 
