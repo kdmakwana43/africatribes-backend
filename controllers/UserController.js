@@ -735,7 +735,7 @@ export const getSuggestedRelations = async (req, res) => {
         {
           model : Users,
           as : 'requestedToUser',
-          attributes : ['first_name','last_name','profile','gender']
+          attributes : ['first_name','last_name','profile','gender','tribe','village','hometown']
         }
       ]
     }); 
