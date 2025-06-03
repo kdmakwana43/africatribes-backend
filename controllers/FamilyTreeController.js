@@ -2,6 +2,8 @@ import { Op } from "sequelize";
 import { __ } from "../config/global.js";
 import FamilyTreesModel from "../models/FamilyTreesModel.js";
 import moment from 'moment'
+import Users from "../models/UserModel.js";
+import InvitationModel from "../models/InvitationModel.js";
 
 
 const prepareMemberData = (body,data = {}) => {
@@ -175,7 +177,14 @@ export const getFamilyTrees = async (req, res) => {
     };
 
     if(req.body.userId){
-      condition.userId = userId
+      
+      const user = await Users.findByPk(req.body.userId);
+      if(!user) throw new Error('User not found! Please check the user id and try again.')
+
+      // Check its accepted 
+     const isAccepted = await InvitationModel.isAccepted(req.body.userId, req.Auth.id);
+      if(!isAccepted && user.allowPublicView == false) throw new Error('This user profile is private! You can not view this family tree.')
+      condition.userId = req.body.userId
     }
 
     // Fetch all nodes for this user
@@ -277,6 +286,10 @@ export const moveChildNode = async (req, res) => {
   try {
 
     __.validation(["id","moveTo"], req.body);
+
+    if(req.body.moveTo == req.body.id) throw new Error('Invalid move operation!')
+
+    
 
     const condition = {
       id  : req.body.id,
@@ -398,3 +411,21 @@ export const createSibling = async (req, res) => {
   }
 };
 
+
+export const getFamilyMembers = async (req, res) => {
+  try {
+
+     const conditionRoot = { 
+      userId : req.Auth.id,
+    }
+    const members =  await FamilyTreesModel.findAll({where : conditionRoot, attributes : ['id', 'first_name', 'surname','relationship', 'profile'], order: [['id', 'ASC']]})
+    if(!members) throw new Error('Oops! No family members found for this user')
+    __.res(
+      res,
+      members,
+      200
+    );
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};

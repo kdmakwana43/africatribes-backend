@@ -56,7 +56,7 @@ export const authResponse = (user, token = false) => {
     first_name: user.first_name,
     last_name: user.last_name,
     email: user.email,
-    country: user.country,
+    country: user.countryId,
     dob: user.dob,
     gender: user.gender,
     hometown: user.hometown,
@@ -64,6 +64,9 @@ export const authResponse = (user, token = false) => {
     village: user.village,
     profile: user.profile,
     alias: user.alias,
+    chief: user.chief,
+    province: user.province,
+    allowPublicView: user.allowPublicView,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };

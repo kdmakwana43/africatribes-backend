@@ -13,6 +13,7 @@ import JWT from "jsonwebtoken";
 import Users from "../models/UserModel.js";
 import upload from "../config/uploadFile.js";
 import { __ } from "../config/global.js";
+import InvitationModel from "../models/InvitationModel.js";
 
 const Router = express.Router();
 // users
@@ -46,21 +47,28 @@ Router.post("/invitations", _auth, UserController.getInvitationsList);
 Router.post("/invitation/update", _auth, UserController.acceptOrRejectInvitation);
 Router.post("/invitations/accepted", _auth, UserController.getAcceptedInvitations);
 Router.post("/invitation/delete", _auth, UserController.deleteInvitation);
+Router.post("/invitations/suggested", _auth, UserController.getSuggestedRelations);
+
+
 
 
 // FamilyTree
 Router.post(
   "/family/create",
   _auth,
+  _familyPermission,
   upload.single("profile"),
   FamilyTreeController.addFamilyNode
 );
-Router.post("/family/tree",_auth,FamilyTreeController.getFamilyTrees);
-Router.post("/family/member/delete",_auth,FamilyTreeController.deleteFamilyNode);
-Router.post("/family/member/update",_auth,upload.single("profile"),FamilyTreeController.updateFamilyNode);
-Router.post("/family/member/move",_auth,FamilyTreeController.moveChildNode);
-Router.post("/family/member/create-parent",_auth,upload.single("profile"),FamilyTreeController.createParentNode);
-Router.post("/family/member/create-sibling",_auth,upload.single("profile"),FamilyTreeController.createSibling);
+Router.post("/family/tree",_auth,_familyPermission,FamilyTreeController.getFamilyTrees);
+Router.post("/family/member/delete",_auth,_familyPermission,FamilyTreeController.deleteFamilyNode);
+Router.post("/family/member/update",_auth,_familyPermission,upload.single("profile"),FamilyTreeController.updateFamilyNode);
+Router.post("/family/member/move",_auth,_familyPermission,FamilyTreeController.moveChildNode);
+Router.post("/family/member/create-parent",_auth,_familyPermission,upload.single("profile"),FamilyTreeController.createParentNode);
+Router.post("/family/member/create-sibling",_auth,_familyPermission,upload.single("profile"),FamilyTreeController.createSibling);
+Router.post("/family/members",_auth,_familyPermission,FamilyTreeController.getFamilyMembers);
+
+
 
 // contact
 Router.post("/contact", ContactController.addContact);
@@ -110,6 +118,22 @@ async function _auth(req, res, next) {
     next();
   } catch (error) {
     __._throwError(res, error);
+  }
+}
+
+async function _familyPermission(req, res, next) {
+  try {
+    
+    if(req.body.userId){
+      const isAccepted = await InvitationModel.isAccepted(req.body.userId, req.Auth.id);
+      if(isAccepted){
+        req.Auth.id = req.body.userId;
+      }
+    }
+    next();
+  } catch (error) {
+    next()
+    // __._throwError(res, error);
   }
 }
 

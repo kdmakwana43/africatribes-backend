@@ -46,4 +46,22 @@ InvitationModel.belongsTo(Users, {
   as: "user",
 });
 
+InvitationModel.belongsTo(Users, {
+  foreignKey: "requestedTo",
+  as: "requestedToUser",
+});
+
+
+// Method
+InvitationModel.isAccepted = async function (userId, requestedTo) {
+  const invitation = await this.findOne({
+    where: {
+      userId,
+      requestedTo,
+      status: "Approved",
+    },
+  });
+  return !!invitation; 
+};
+
 export default InvitationModel;

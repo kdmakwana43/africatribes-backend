@@ -472,9 +472,21 @@ export const getUsers = async (req, res) => {
 
 
     if (req.body.char && req.body.char.trim() !== '') {
-        condition.first_name = {
-          [Op.like]: `${req.body.char}%`
-        };
+      condition.first_name = {
+        [Op.like]: `${req.body.char}%`
+      };
+    }
+
+    if (req.body.search && req.body.search.trim() !== '') {
+        const searchTerm = req.body.search.trim();
+
+        condition[Op.or]= [
+            { first_name: { [Op.like]: `%${searchTerm}%` } },
+            { last_name: { [Op.like]: `%${searchTerm}%` } },
+            { village: { [Op.like]: `%${searchTerm}%` } },
+            { tribe: { [Op.like]: `%${searchTerm}%` } },
+            { hometown: { [Op.like]: `%${searchTerm}%` } },
+          ]
       }
 
     const users = await Users.findAll({
@@ -482,7 +494,7 @@ export const getUsers = async (req, res) => {
       offset : skip,
       limit : limit,
       order : [[ sortField || 'createdAt', sortOrder || 'DESC' ]],
-      attributes: ['id', 'first_name', 'last_name','email','gender','profile'],
+      attributes: ['id', 'first_name', 'last_name','email','gender','profile','village','tribe','hometown'],
       include: [{
         model: CountryModel,
         as: 'country',
@@ -630,7 +642,7 @@ export const acceptOrRejectInvitation = async (req, res) => {
 
     if(isExistInvitation && isExistInvitation.status != 'Pending') throw new Error(`This invitation is already ${isExistInvitation.status}`) 
     isExistInvitation.status  = status
-    isExistInvitation.save()
+    await isExistInvitation.save()
     __.res(res, `Invitation ${status} successfully`, 200);
 
   } catch (error) {
@@ -684,7 +696,10 @@ export const deleteInvitation = async (req, res) => {
 
     const condition = {
       id: id,
-      requestedTo: req.Auth.id,
+      [Op.or]: [
+        { userId: req.Auth.id },
+        { requestedTo: req.Auth.id }
+      ]
     };
 
     const invitation = await InvitationModel.findOne({ where: condition });
@@ -697,3 +712,42 @@ export const deleteInvitation = async (req, res) => {
     __._throwError(res, error);
   }
 };
+
+
+
+export const getSuggestedRelations = async (req, res) => {
+  try {
+
+
+    const { skip = 0, limit = 10, sort = "createdAt:DESC" } = req.body;
+    const [sortField, sortOrder] = sort.split(":");
+   
+    const condition = {
+      userId: req.Auth.id,
+      status : 'Pending'
+    };
+    const invitations = await InvitationModel.findAll({ 
+      where: condition,
+      offset : parseInt(skip),
+      limit : parseInt(limit),
+      order : [ [ sortField || 'createdAt', sortOrder || 'DESC' ] ],
+      include : [
+        {
+          model : Users,
+          as : 'requestedToUser',
+          attributes : ['first_name','last_name','profile','gender','tribe','village','hometown']
+        }
+      ]
+    }); 
+     if(req.body.wantCount){
+      const totalMatchCount = await InvitationModel.count({ where: condition }); 
+      __.res(res,{invitations,totalMatchCount}, 200);
+
+     } else {
+      __.res(res,invitations, 200);
+     }
+
+  } catch (error) {
+     __._throwError(res, error);
+  }
+}
