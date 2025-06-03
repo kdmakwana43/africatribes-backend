@@ -29,8 +29,6 @@ import ContactUsPageModel from "../models/ContactUsPageModel.js";
 
 AdminJS.registerAdapter(AdminJSMongoose);
 
-console.log("APP_PATH", APP_PATH);
-
 // Initialize component loader
 const componentLoader = new ComponentLoader();
 const COMPONENTS = {
@@ -130,10 +128,6 @@ const adminJs = new AdminJS({
     logo: `${BASE_URL}/assets/africatribes_logo.svg`,
     companyName: "Afrikatribes",
     softwareBrothers: false,
-    loginMessage: `
-      <h1>New dashboard title</h1>
-      <p>Welcome to your new admin panel. You can manage all your data from here.</p>
-    `,
   },
   resources: [
     {
