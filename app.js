@@ -16,15 +16,16 @@ const PORT = process.env.PORT || 8080;
 // Middleware
 app.use(cors());
 app.use(express.json()); 
-app.use(express.urlencoded({ extended: true })); 
 
 app.use(express.static("public", { maxAge: "365d" }));
 app.use(express.static(path.join(APP_PATH, "../public")));
 
+app.use("/master", adminRouter);
+app.use(express.urlencoded({ extended: true })); 
+
+
 // Routes
 app.use("/api/v1", Router);
-app.use("/master", adminRouter);
-
 
 
 // Start server
