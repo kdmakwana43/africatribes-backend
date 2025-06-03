@@ -283,6 +283,10 @@ export const moveChildNode = async (req, res) => {
 
     __.validation(["id","moveTo"], req.body);
 
+    if(req.body.moveTo == req.body.id) throw new Error('Invalid move operation!')
+
+    
+
     const condition = {
       id  : req.body.id,
       userId : req.Auth.id
@@ -403,3 +407,21 @@ export const createSibling = async (req, res) => {
   }
 };
 
+
+export const getFamilyMembers = async (req, res) => {
+  try {
+
+     const conditionRoot = { 
+      userId : req.Auth.id,
+    }
+    const members =  await FamilyTreesModel.findAll({where : conditionRoot, attributes : ['id', 'first_name', 'surname','relationship', 'profile'], order: [['id', 'ASC']]})
+    if(!members) throw new Error('Oops! No family members found for this user')
+    __.res(
+      res,
+      members,
+      200
+    );
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};

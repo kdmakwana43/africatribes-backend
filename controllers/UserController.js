@@ -480,15 +480,13 @@ export const getUsers = async (req, res) => {
     if (req.body.search && req.body.search.trim() !== '') {
         const searchTerm = req.body.search.trim();
 
-        condition = {
-          [Op.or]: [
+        condition[Op.or]= [
             { first_name: { [Op.like]: `%${searchTerm}%` } },
             { last_name: { [Op.like]: `%${searchTerm}%` } },
             { village: { [Op.like]: `%${searchTerm}%` } },
             { tribe: { [Op.like]: `%${searchTerm}%` } },
             { hometown: { [Op.like]: `%${searchTerm}%` } },
           ]
-        };
       }
 
     const users = await Users.findAll({
@@ -698,7 +696,10 @@ export const deleteInvitation = async (req, res) => {
 
     const condition = {
       id: id,
-      requestedTo: req.Auth.id,
+      [Op.or]: [
+        { userId: req.Auth.id },
+        { requestedTo: req.Auth.id }
+      ]
     };
 
     const invitation = await InvitationModel.findOne({ where: condition });
@@ -711,3 +712,42 @@ export const deleteInvitation = async (req, res) => {
     __._throwError(res, error);
   }
 };
+
+
+
+export const getSuggestedRelations = async (req, res) => {
+  try {
+
+
+    const { skip = 0, limit = 10, sort = "createdAt:DESC" } = req.body;
+    const [sortField, sortOrder] = sort.split(":");
+   
+    const condition = {
+      userId: req.Auth.id,
+      status : 'Pending'
+    };
+    const invitations = await InvitationModel.findAll({ 
+      where: condition,
+      offset : parseInt(skip),
+      limit : parseInt(limit),
+      order : [ [ sortField || 'createdAt', sortOrder || 'DESC' ] ],
+      include : [
+        {
+          model : Users,
+          as : 'requestedToUser',
+          attributes : ['first_name','last_name','profile','gender']
+        }
+      ]
+    }); 
+     if(req.body.wantCount){
+      const totalMatchCount = await InvitationModel.count({ where: condition }); 
+      __.res(res,{invitations,totalMatchCount}, 200);
+
+     } else {
+      __.res(res,invitations, 200);
+     }
+
+  } catch (error) {
+     __._throwError(res, error);
+  }
+}

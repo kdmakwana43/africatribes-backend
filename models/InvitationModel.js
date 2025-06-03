@@ -46,4 +46,9 @@ InvitationModel.belongsTo(Users, {
   as: "user",
 });
 
+InvitationModel.belongsTo(Users, {
+  foreignKey: "requestedTo",
+  as: "requestedToUser",
+});
+
 export default InvitationModel;

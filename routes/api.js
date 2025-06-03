@@ -46,6 +46,7 @@ Router.post("/invitations", _auth, UserController.getInvitationsList);
 Router.post("/invitation/update", _auth, UserController.acceptOrRejectInvitation);
 Router.post("/invitations/accepted", _auth, UserController.getAcceptedInvitations);
 Router.post("/invitation/delete", _auth, UserController.deleteInvitation);
+Router.post("/invitations/suggested", _auth, UserController.getSuggestedRelations);
 
 
 // FamilyTree
@@ -61,6 +62,7 @@ Router.post("/family/member/update",_auth,upload.single("profile"),FamilyTreeCon
 Router.post("/family/member/move",_auth,FamilyTreeController.moveChildNode);
 Router.post("/family/member/create-parent",_auth,upload.single("profile"),FamilyTreeController.createParentNode);
 Router.post("/family/member/create-sibling",_auth,upload.single("profile"),FamilyTreeController.createSibling);
+Router.post("/family/members",_auth,FamilyTreeController.getFamilyMembers);
 
 // contact
 Router.post("/contact", ContactController.addContact);
