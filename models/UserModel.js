@@ -89,6 +89,26 @@ const Users = sequelize.define(
         },
       },
     },
+    chief: {
+      type: DataTypes.STRING,
+      defaultValue: "",
+      validate: {
+        len: {
+          args: [0, 100],
+          msg: "Chief can have up to 100 characters.",
+        },
+      },
+    },
+    province: {
+      type: DataTypes.STRING,
+      defaultValue: "",
+      validate: {
+        len: {
+          args: [0, 100],
+          msg: "Province can have up to 100 characters.",
+        },
+      },
+    },
     village: {
       type: DataTypes.STRING,
       defaultValue: "",
@@ -117,6 +137,16 @@ const Users = sequelize.define(
           msg: "Alias can have up to 100 characters.",
         },
       },
+    },
+    allowPublicView: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+      validate: {
+        isBoolean: {
+          msg: "Allow Public View must be a boolean value."
+        }
+      }
     },
     status: {
       type: DataTypes.ENUM('Active', 'Deactivate'),

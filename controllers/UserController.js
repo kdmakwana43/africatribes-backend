@@ -472,8 +472,22 @@ export const getUsers = async (req, res) => {
 
 
     if (req.body.char && req.body.char.trim() !== '') {
-        condition.first_name = {
-          [Op.like]: `${req.body.char}%`
+      condition.first_name = {
+        [Op.like]: `${req.body.char}%`
+      };
+    }
+
+    if (req.body.search && req.body.search.trim() !== '') {
+        const searchTerm = req.body.search.trim();
+
+        condition = {
+          [Op.or]: [
+            { first_name: { [Op.like]: `%${searchTerm}%` } },
+            { last_name: { [Op.like]: `%${searchTerm}%` } },
+            { village: { [Op.like]: `%${searchTerm}%` } },
+            { tribe: { [Op.like]: `%${searchTerm}%` } },
+            { hometown: { [Op.like]: `%${searchTerm}%` } },
+          ]
         };
       }
 
@@ -630,7 +644,7 @@ export const acceptOrRejectInvitation = async (req, res) => {
 
     if(isExistInvitation && isExistInvitation.status != 'Pending') throw new Error(`This invitation is already ${isExistInvitation.status}`) 
     isExistInvitation.status  = status
-    isExistInvitation.save()
+    await isExistInvitation.save()
     __.res(res, `Invitation ${status} successfully`, 200);
 
   } catch (error) {

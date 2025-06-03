@@ -64,6 +64,9 @@ export const authResponse = (user, token = false) => {
     village: user.village,
     profile: user.profile,
     alias: user.alias,
+    chief: user.chief,
+    province: user.province,
+    allowPublicView: user.allowPublicView,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
