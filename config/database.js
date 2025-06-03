@@ -22,6 +22,6 @@ const syncDatabase = async () => {
   }
 };
 
-syncDatabase();
+// syncDatabase();
 
 export default sequelize;
