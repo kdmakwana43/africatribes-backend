@@ -64,7 +64,8 @@ export const userRegister = async (req, res) => {
         dob :  user.dob,
         birthTown : user.hometown,
         relationship : 'Myself',
-        isOwner : true
+        isOwner : true,
+        gender : user.gender
       }
       await FamilyTreesModel.create(member);
       console.log('Member created')

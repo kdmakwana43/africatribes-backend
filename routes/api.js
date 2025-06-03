@@ -101,6 +101,9 @@ Router.post("/page/banners", PageController.getBanners);
 
 async function _auth(req, res, next) {
   try {
+
+
+
     const token = req.headers["authorization"];
     if (!token) {
       throw new Error("Unauthorized access");
