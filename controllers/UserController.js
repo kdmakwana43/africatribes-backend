@@ -516,7 +516,23 @@ export const getUsers = async (req, res) => {
   }
 }
 
+export const totalUsersCount = async (req, res) => {
+  try {
 
+    const condition = {
+      status : 'Active'
+    }
+
+    const totalMatchCount =  await Users.count({
+      where : condition,
+    })
+    
+    __.res(res, totalMatchCount, 200);
+
+  } catch (error) {
+     __._throwError(res, error);
+  }
+}
 
 export const requestForJoinFamily = async (req, res) => {
   try {
