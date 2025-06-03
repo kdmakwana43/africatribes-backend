@@ -442,7 +442,7 @@ const adminJs = new AdminJS({
   },
 });
 
-adminJs.watch();
+// adminJs.watch();
 
 const ADMIN = {
   email: "admin@africatribes.com",
@@ -462,11 +462,11 @@ const provider = new DefaultAuthProvider({
 });
 
 // Initialize AdminJS (required if using custom components)
-// if (process.env.MODE === "production") {
-//   await adminJs.initialize();
-// } else {
-//   adminJs.watch();
-// }
+if (process.env.MODE === "production") {
+  await adminJs.initialize();
+} else {
+  adminJs.watch();
+}
 
 // Build authenticated router with the provider
 const adminRouter = buildAuthenticatedRouter(
