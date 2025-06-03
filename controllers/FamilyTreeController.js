@@ -3,6 +3,7 @@ import { __ } from "../config/global.js";
 import FamilyTreesModel from "../models/FamilyTreesModel.js";
 import moment from 'moment'
 import Users from "../models/UserModel.js";
+import InvitationModel from "../models/InvitationModel.js";
 
 
 const prepareMemberData = (body,data = {}) => {
@@ -179,7 +180,15 @@ export const getFamilyTrees = async (req, res) => {
       
       const user = await Users.findByPk(req.body.userId);
       if(!user) throw new Error('User not found! Please check the user id and try again.')
-      if(user.allowPublicView == false) throw new Error('This user profile is private! You can not view this family tree.')
+
+      // Check its accepted 
+      const isAccepted = await InvitationModel.findOne({where : {
+        userId: req.Auth.id,
+        requestedTo: req.body.userId,
+        status: 'Accepted'
+      }})
+
+      if(!isAccepted && user.allowPublicView == false) throw new Error('This user profile is private! You can not view this family tree.')
       condition.userId = req.body.userId
     }
 
