@@ -1,6 +1,6 @@
 // admin.js
 import AdminJS from "adminjs";
-import AdminJSExpress from "@adminjs/express";
+import AdminJSExpress, { buildAuthenticatedRouter } from "@adminjs/express";
 import * as AdminJSMongoose from "@adminjs/sequelize";
 import path from "path";
 
@@ -130,10 +130,12 @@ const adminJs = new AdminJS({
     logo: `${BASE_URL}/assets/africatribes_logo.svg`,
     companyName: "Afrikatribes",
     softwareBrothers: false,
+    loginMessage: `
+      <h1>New dashboard title</h1>
+      <p>Welcome to your new admin panel. You can manage all your data from here.</p>
+    `,
   },
   resources: [
-    
-    
     {
       resource: Users,
       options: userResourceOptions,
@@ -165,7 +167,6 @@ const adminJs = new AdminJS({
         listProperties: ["createdAt", "userId", "first_name", "relationship"],
       },
     },
-
 
     {
       resource: SponsorModel,
@@ -266,7 +267,7 @@ const adminJs = new AdminJS({
         ],
       },
     },
-    
+
     {
       resource: AboutUsModel,
       options: {
@@ -365,7 +366,6 @@ const adminJs = new AdminJS({
       },
     },
 
-
     {
       resource: ContactUsPageModel,
       options: {
@@ -433,17 +433,10 @@ const adminJs = new AdminJS({
     component: COMPONENTS.Dashboard,
     handler: dashboardHandler,
   },
-  locale: {
-    translations: {
-      resources: {
-        FAQModel: {
-          name: "FAQs",
-          name_plural: "FAQs",
-        },
-      },
-    },
-  },
+
   rootPath: "/master",
+  loginPath: "/master/login",
+  logoutPath: "/master/logout",
   assets: {
     styles: [`${BASE_URL}/assets/sidebar.css`],
   },
@@ -452,9 +445,44 @@ const adminJs = new AdminJS({
 adminJs.watch();
 
 const ADMIN = {
-  email: "admin@mail.com",
-  password: "Admin@Pass123",
+  email: "admin@africatribes.com",
+  password: "fricatribes@Master0011",
 };
+
+// Create auth provider
+const provider = new DefaultAuthProvider({
+  componentLoader,
+  authenticate: async ({ email, password }) => {
+    if (email === ADMIN.email && password === ADMIN.password) {
+      return { email }; // or return more user details if needed
+    }
+
+    return null;
+  },
+});
+
+// Initialize AdminJS (required if using custom components)
+// if (process.env.MODE === "production") {
+//   await adminJs.initialize();
+// } else {
+//   adminJs.watch();
+// }
+
+// Build authenticated router with the provider
+const adminRouter = buildAuthenticatedRouter(
+  adminJs,
+  {
+    provider,
+    cookiePassword: process.env.COOKIE_SECRET,
+    cookieName: "adminJs",
+  },
+  null,
+  {
+    secret: process.env.COOKIE_SECRET,
+    resave: true,
+    saveUninitialized: true,
+  }
+);
 
 // const router = AdminJSExpress.buildAuthenticatedRouter(adminJs, {
 //   authenticate: async (email, password) => {
@@ -501,6 +529,6 @@ const ADMIN = {
 //   }
 // );
 
-const adminRouter = AdminJSExpress.buildRouter(adminJs);
+// const adminRouter = AdminJSExpress.buildRouter(adminJs);
 
 export default adminRouter;
