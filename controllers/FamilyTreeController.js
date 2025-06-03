@@ -47,10 +47,14 @@ export const addFamilyNode = async (req, res) => {
 
     __.validation(["first_name"], req.body);
 
+    console.log('req.body',req.body)
+
     var data = {
       first_name: req.body.first_name,
       userId: req.Auth.id,
     };
+
+    console.log('data',data)
 
     if(req.body.parent){
       data.parentId = req.body.parent
@@ -65,8 +69,13 @@ export const addFamilyNode = async (req, res) => {
 
     const currentMemberCondition = {
       userId : req.Auth.id,
-      id : data.parentId,
     }
+
+    if(data.parentId){
+      currentMemberCondition.id = data.parentId
+    }
+
+    console.log('currentMemberCondition',currentMemberCondition)
 
     const currentMember =  await FamilyTreesModel.findOne({where : currentMemberCondition,order: [['id', 'ASC']]})
     if(!currentMember) throw new Error('Current member not found!');
@@ -165,6 +174,7 @@ export const addFamilyNode = async (req, res) => {
       200
     );
   } catch (error) {
+    console.log('error',error)
     __._throwError(res, error);
   }
 };
@@ -426,6 +436,89 @@ export const getFamilyMembers = async (req, res) => {
       200
     );
   } catch (error) {
+    __._throwError(res, error);
+  }
+};
+
+export const getFamilyBalkanTree = async (req, res) => {
+  try {
+    // Fetch family tree entries for the authenticated user with children, parent, and user data
+    const familyMembers = await FamilyTreesModel.findAll({
+      where: { userId: req.Auth.id },
+      include: [
+        { model: FamilyTreesModel, as: 'children', attributes: ['id', 'relationship'] },
+        { model: FamilyTreesModel, as: 'parent', attributes: ['id', 'relationship'] },
+        // { 
+        //   model: Users, 
+        //   as: 'user', // Ensure this alias matches your model definition
+        //   attributes: ['email', 'phone', 'city', 'country'], // Adjust based on actual User model fields
+        //   required: false // Make join optional to avoid excluding records without user data
+        // },
+      ],
+    });
+
+    // Transform the data to BALKAN FamilyTreeJS format
+    const result = familyMembers.map(member => {
+      // Determine gender based on relationship
+      const femaleRelationships = [
+        'Mother', 'Daughter', 'Sister', 'Aunt', 'Cousin Sister', 'Niece',
+        'Grand Mother', 'Grand Daughter', 'Mother In Law', 'Sister In Law', 'Spouse'
+      ];
+      const maleRelationships = [
+        'Father', 'Son', 'Brother', 'Uncle', 'Cousin Brother', 'Nephew',
+        'Grand Father', 'Grand Son', 'Father In Law', 'Brother In Law'
+      ];
+      const gender = femaleRelationships.includes(member.relationship)
+        ? 'female'
+        : maleRelationships.includes(member.relationship)
+        ? 'male'
+        : null;
+
+      // Get spouse IDs from the spouses field, ensuring numeric IDs
+      const pids = member.spouses && Array.isArray(member.spouses) 
+        ? member.spouses.map(id => Number(id)).filter(id => !isNaN(id)) 
+        : [];
+
+      // Determine mother (mid) and father (fid) IDs
+      let mid = null;
+      let fid = null;
+      if (member.parent) {
+        if (member.parent.relationship === 'Mother') {
+          mid = member.parent.id;
+        } else if (member.parent.relationship === 'Father') {
+          fid = member.parent.id;
+        }
+      }
+      // Check children for additional parent information (optional for robustness)
+      const children = member.children || [];
+      children.forEach(child => {
+        if (child.relationship === 'Mother') mid = child.id;
+        if (child.relationship === 'Father') fid = child.id;
+      });
+
+      // Construct the name
+      const name = `${member.first_name} ${member.surname || ''}`.trim();
+
+      // Build the output object for BALKAN FamilyTreeJS
+      const output = {
+        id: member.id,
+        pids: pids.length > 0 ? pids : undefined,
+        gender: gender || undefined,
+        photo: member.profile || undefined,
+        name,
+        born: member.dob || undefined,
+        mid: mid || undefined,
+        fid: fid || undefined,
+        // Include additional fields from Users model if available
+      };
+
+      // Remove undefined fields to keep output clean
+      return Object.fromEntries(Object.entries(output).filter(([_, v]) => v !== undefined));
+    });
+
+    __.res(res, result, 200);
+  } catch (error) {
+    console.error('Error fetching family tree data:', error);
     __._throwError(res, error);
   }
 };

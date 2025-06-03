@@ -138,6 +138,17 @@ const Users = sequelize.define(
         },
       },
     },
+    totem: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: "",
+      validate: {
+        len: {
+          args: [0, 100],
+          msg: "Totem can have up to 100 characters.",
+        },
+      },
+    },
     allowPublicView: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
@@ -145,6 +156,16 @@ const Users = sequelize.define(
       validate: {
         isBoolean: {
           msg: "Allow Public View must be a boolean value."
+        }
+      }
+    },
+    isPremium: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      validate: {
+        isBoolean: {
+          msg: "Premium must be a boolean value."
         }
       }
     },

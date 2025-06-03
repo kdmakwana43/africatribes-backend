@@ -66,6 +66,8 @@ export const authResponse = (user, token = false) => {
     alias: user.alias,
     chief: user.chief,
     province: user.province,
+    totem: user.totem,
+    isPremium: user.isPremium,
     allowPublicView: user.allowPublicView,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,

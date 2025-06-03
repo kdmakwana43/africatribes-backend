@@ -56,8 +56,8 @@ Router.post("/invitations/suggested", _auth, UserController.getSuggestedRelation
 Router.post(
   "/family/create",
   _auth,
-  _familyPermission,
   upload.single("profile"),
+  _familyPermission,
   FamilyTreeController.addFamilyNode
 );
 Router.post("/family/tree",_auth,_familyPermission,FamilyTreeController.getFamilyTrees);
@@ -67,6 +67,7 @@ Router.post("/family/member/move",_auth,_familyPermission,FamilyTreeController.m
 Router.post("/family/member/create-parent",_auth,_familyPermission,upload.single("profile"),FamilyTreeController.createParentNode);
 Router.post("/family/member/create-sibling",_auth,_familyPermission,upload.single("profile"),FamilyTreeController.createSibling);
 Router.post("/family/members",_auth,_familyPermission,FamilyTreeController.getFamilyMembers);
+Router.post("/family/premium/tree",_auth,_familyPermission,FamilyTreeController.getFamilyBalkanTree);
 
 
 
@@ -122,14 +123,21 @@ async function _auth(req, res, next) {
 }
 
 async function _familyPermission(req, res, next) {
+
+  console.log('req.body',req.body)
+
   try {
+
+    console.log('req.body.userId',req.body.userId,req.Auth.id)
     
     if(req.body.userId){
       const isAccepted = await InvitationModel.isAccepted(req.body.userId, req.Auth.id);
+      console.log('isAccepted',isAccepted)
       if(isAccepted){
-        req.Auth.id = req.body.userId;
+        req.Auth.id = Number(req.body.userId);
       }
     }
+    console.log('req.Auth.id',req.Auth.id)
     next();
   } catch (error) {
     next()
