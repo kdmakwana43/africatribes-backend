@@ -494,7 +494,7 @@ export const getUsers = async (req, res) => {
       offset : skip,
       limit : limit,
       order : [[ sortField || 'createdAt', sortOrder || 'DESC' ]],
-      attributes: ['id', 'first_name', 'last_name','email','gender','profile'],
+      attributes: ['id', 'first_name', 'last_name','email','gender','profile','village','tribe','hometown'],
       include: [{
         model: CountryModel,
         as: 'country',
