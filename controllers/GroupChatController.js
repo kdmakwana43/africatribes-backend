@@ -1,0 +1,308 @@
+import { Op } from "sequelize";
+import { __ } from "../config/global.js";
+import Users from "../models/UserModel.js";
+import { th } from "@faker-js/faker";
+import GroupChatsModel from "../models/GroupChatsModel.js";
+import GroupMembersModel from "../models/GroupMembersModel.js";
+import GroupModel from "../models/GroupModel.js";
+import moment from "moment";
+
+
+export const createGroup = async (req, res) => {
+  try {
+
+    // Validate input
+    __.validation(["name","members"], req.body);
+    const userId = req.Auth.id;
+    const group = await GroupModel.create({
+      name: req.body.name,
+      creatorId: userId,
+    });
+
+    // console.log("Group created:", group);
+
+    if(!Array.isArray(req.body.members)) throw new Error("Members should be an array");
+
+    // Add creator as admin
+     await GroupMembersModel.create({
+      groupId: group.id,
+      userId,
+      role: "admin",
+    });
+
+    console.log('req.body.members',req.body.members)
+
+    // Add Members
+    // const memberPromises = req.body.members.map(memberId => {
+    //   return GroupMembersModel.create({
+    //     groupId: group.id,
+    //     userId: memberId,
+    //     role: "member",
+    //   });
+    // });
+
+    // await Promise.all(memberPromises);
+
+    __.res(res, 'New Group created successfully!', 200);
+  } catch (error) {
+    console.error("Error creating group:", error);
+    __._throwError(res, error);
+  }
+};
+
+// Add member to group
+export const addMember = async (req, res) => {
+  try {
+    __.validation(["groupId", "members"], req.body);
+    const { groupId, members } = req.body;
+    const requesterId = req.Auth.id;
+
+    if (!Array.isArray(members)) throw new Error("Members should be an array");
+
+    const isAdmin = await GroupMembersModel.findOne({
+      where: { groupId, userId: requesterId, role: "admin" },
+    });
+    if (!isAdmin) {
+      return __._throwError(res, new Error("Only admins can add members"));
+    }
+
+    const existingMembers = await GroupMembersModel.findAll({
+      where: {
+        groupId,
+        userId: members,
+      },
+      attributes: ['userId'],
+    });
+
+    const existingMemberIds = existingMembers.map(m => m.userId);
+    const newMemberIds = members.filter(id => !existingMemberIds.includes(id));
+
+    const memberPromises = newMemberIds.map(memberId => {
+      return GroupMembersModel.create({
+        groupId,
+        userId: memberId,
+        role: "member",
+      });
+    });
+
+    await Promise.all(memberPromises);
+
+    __.res(res, { message: "Members added successfully", addedCount: newMemberIds.length }, 200);
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};
+
+
+// Remove member from group
+export const removeMember = async (req, res) => {
+  try {
+
+    __.validation(["groupId", "userId"], req.body);
+    const { groupId, userId } = req.body;
+    const requesterId = req.Auth.id;
+
+    // Check if requester is an admin
+    const isAdmin = await GroupMembersModel.findOne({
+      where: { groupId, userId: requesterId, role: "admin" },
+    });
+    if (!isAdmin) {
+      return __._throwError(res, new Error("Only admins can remove members"));
+    }
+
+    // Check if user is a member
+    const member = await GroupMembersModel.findOne({ where: { groupId, userId } });
+    if (!member) {
+      return __._throwError(res, new Error("User is not a member of this group"));
+    }
+
+    // Prevent removing the creator
+    const group = await GroupModel.findByPk(groupId);
+    if (group.creatorId === userId) {
+      return __._throwError(res, new Error("Cannot remove the group creator"));
+    }
+
+    // Remove member
+    await member.destroy();
+
+    __.res(res, { message: "Member removed successfully" }, 200);
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};
+
+// Make member an admin
+export const changeRole = async (req, res) => {
+  try {
+
+    __.validation(["groupId", "userId", "role"], req.body);
+
+    const { groupId, userId, role } = req.body;
+    const requesterId = req.Auth.id;
+
+    if(requesterId === userId) {
+      return __._throwError(res, new Error("You cannot change your own role"));
+    }
+
+    // Check if requester is an admin
+    const isAdmin = await GroupMembersModel.findOne({
+      where: { groupId, userId: requesterId, role: "admin" },
+    });
+    if (!isAdmin) {
+      return __._throwError(res, new Error("Only admins can make others admin"));
+    }
+
+    // Check if user is a member
+    const member = await GroupMembersModel.findOne({ where: { groupId, userId } });
+    if (!member) {
+      return __._throwError(res, new Error("User is not a member of this group"));
+    }
+
+    await member.update({ role: role });
+    __.res(res, { message: `User role updated to ${role}` }, 200);
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};
+
+// Delete group
+export const deleteGroup = async (req, res) => {
+  try {
+    __.validation(["groupId"], req.body);
+    const { groupId } = req.body;
+    const requesterId = req.Auth.id;
+
+    // Check if group exists and requester is the creator
+    const group = await GroupModel.findOne({
+      where: { id: groupId, creatorId: requesterId },
+    });
+    if (!group) {
+      return __._throwError(res, new Error("Group not found or you are not the creator"));
+    }
+
+    // Delete group (cascades to GroupMembers and GroupChats)
+    await group.destroy();
+
+    __.res(res, { message: "Group deleted successfully" }, 200);
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};
+
+// Get group chats
+export const getGroupChats = async (req, res) => {
+  try {
+    __.validation(["groupId"], req.body);
+    const { groupId } = req.body;
+    const requesterId = req.Auth.id;
+
+    // Check if user is a member of the group
+    const isMember = await GroupMembersModel.findOne({
+      where: { groupId, userId: requesterId },
+    });
+    if (!isMember) {
+      return __._throwError(res, new Error("You are not a member of this group"));
+    }
+
+    // Fetch chats
+    const chats = await GroupChatsModel.findAll({
+      where: { groupId },
+      include: [
+        {
+          model: Users,
+          as: "sender",
+          attributes: ["id", "first_name", "last_name", "village", "tribe", "profile"],
+        },
+      ],
+      order: [["sentAt", "ASC"]],
+    });
+
+    // Format messages by date
+    const formattedMessages = {};
+    const today = moment().startOf("day");
+    const yesterday = moment().subtract(1, "days").startOf("day");
+
+    chats.forEach((message) => {
+      const sentAt = moment(message.sentAt);
+      let dateKey;
+
+      
+      if (sentAt.isSame(today, "day")) {
+        dateKey = "Today";
+      } else if (sentAt.isSame(yesterday, "day")) {
+        dateKey = "Yesterday";
+      } else {
+        dateKey = sentAt.format("DD-MM-YYYY");
+      }
+
+      // Initialize date array if not exists
+      if (!formattedMessages[dateKey]) {
+        formattedMessages[dateKey] = [];
+      }
+
+      // Create message object
+      const messageObject = {
+        id: message.id,
+        userId: message.userId,
+        first_name: message.sender.first_name,
+        last_name: message.sender.last_name,
+        village: message.sender.village,
+        tribe: message.sender.tribe,
+        profile: message.sender.profile,
+        message: message.message,
+        sentAt: message.sentAt,
+      };
+
+      // Add to formatted messages
+      formattedMessages[dateKey].push(messageObject);
+    });
+
+    __.res(res, formattedMessages, 200);
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};
+
+export const getGroups = async (req, res) => {
+  try {
+
+    const groups = await GroupModel.findAll({
+      where: { creatorId: req.Auth.id },
+      order: [["id", "ASC"]],
+    });
+
+    __.res(res, groups, 200);
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};
+
+export const groupDetails = async (req, res) => {
+  try {
+
+    __.validation(["groupId"], req.body);
+    const { groupId } = req.body;
+
+    const groups = await GroupModel.findOne({
+      where: { id: groupId },
+      order: [["createdAt", "ASC"]],
+      include : [
+        {
+          model: GroupMembersModel,
+          as: "members",
+          include: [
+            {
+              model: Users,
+              as: "user",
+              attributes: ["id", "first_name",'last_name','village','tribe', "profile"],
+            },
+          ],
+        },
+      ]
+    });
+
+    __.res(res, groups, 200);
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};

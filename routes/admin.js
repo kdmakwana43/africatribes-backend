@@ -26,6 +26,8 @@ import BannerModel from "../models/BannerModel.js";
 import InvitationModel from "../models/InvitationModel.js";
 import FamilyTreesModel from "../models/FamilyTreesModel.js";
 import ContactUsPageModel from "../models/ContactUsPageModel.js";
+import GroupChatsModel from "../models/GroupChatsModel.js";
+import GroupModel from "../models/GroupModel.js";
 
 AdminJS.registerAdapter(AdminJSMongoose);
 
@@ -159,6 +161,24 @@ const adminJs = new AdminJS({
           name: "Users",
         },
         listProperties: ["createdAt", "userId", "first_name", "relationship"],
+      },
+    },
+
+    {
+      resource: GroupModel,
+      options: {
+        parent: {
+          name: "Group Chats",
+        },
+      },
+    },
+
+    {
+      resource: GroupChatsModel,
+      options: {
+        parent: {
+          name: "Group Chats",
+        },
       },
     },
 
@@ -523,6 +543,6 @@ const adminRouter = buildAuthenticatedRouter(
 //   }
 // );
 
-// const adminRouter = AdminJSExpress.buildRouter(adminJs);
+const adminRouterX = AdminJSExpress.buildRouter(adminJs);
 
-export default adminRouter;
+export default adminRouterX;

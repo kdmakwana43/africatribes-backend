@@ -7,6 +7,8 @@ import {
   BlogController,
   PageController,
   FamilyTreeController,
+  PaymentController,
+  GroupChatController
 } from "../controllers/__init__.js";
 
 import JWT from "jsonwebtoken";
@@ -98,8 +100,22 @@ Router.post("/page/contact-us", PageController.getContactUsPage);
 Router.post("/page/banners", PageController.getBanners);
 
 
-// middleware
+// Group Chat
+Router.post("/chats/group/create", _auth, GroupChatController.createGroup);
+Router.post("/chats/groups", _auth, GroupChatController.getGroups);
+Router.post("/chats/group-details", _auth, GroupChatController.groupDetails);
+Router.post("/chats/messages", _auth, GroupChatController.getGroupChats);
+Router.post("/chats/group/add-members", _auth, GroupChatController.addMember);
+Router.post("/chats/group/remove-member", _auth, GroupChatController.removeMember);
+Router.post("/chats/member/role-change", _auth, GroupChatController.changeRole);
+Router.post("/chats/group/delete", _auth, GroupChatController.deleteGroup);
 
+// Payments
+Router.post("/payment/init-payment-sheet", _auth, PaymentController.paymentInit);
+Router.post("/payment/verification", _auth, PaymentController.verifyPayment);
+
+
+// middleware
 async function _auth(req, res, next) {
   try {
 

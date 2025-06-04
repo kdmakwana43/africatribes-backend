@@ -4,4 +4,6 @@ import * as SponsorController from "./SponsorController.js";
 import * as BlogController from "./BlogController.js";
 import * as PageController from "./PageController.js";
 import * as FamilyTreeController from "./FamilyTreeController.js";
-export { UserController, ContactController, SponsorController,BlogController,PageController,FamilyTreeController };
+import * as PaymentController from "./PaymentController.js";
+import * as GroupChatController from "./GroupChatController.js";
+export { UserController, ContactController, SponsorController,BlogController,PageController,FamilyTreeController,PaymentController,GroupChatController };

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Group Chat</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body>
+  <h1>Group Chat</h1>
+  <input id="groupId" placeholder="Group ID">
+  <input id="message" placeholder="Type a message">
+  <button onclick="sendMessage()">Send</button>
+  <div id="chat"></div>
+
+  <script>
+    const socket = io("http://localhost:8080", {
+      auth: { token: "your_jwt_token" }, // Replace with actual JWT token
+    });
+
+    socket.on("connect", () => {
+      console.log("Connected to server");
+      const groupId = document.getElementById("groupId").value;
+      if (groupId) {
+        socket.emit("joinGroup", { groupId });
+      }
+    });
+
+    socket.on("joinedGroup", ({ groupId }) => {
+      console.log(`Joined group ${groupId}`);
+    });
+
+    socket.on("groupMessage", ({ id, groupId, userId, message, sentAt }) => {
+      const chatDiv = document.getElementById("chat");
+      chatDiv.innerHTML += `<p><b>User ${userId}:</b> ${message} (${new Date(sentAt).toLocaleString()})</p>`;
+    });
+
+    socket.on("error", ({ message }) => {
+      alert(`Error: ${message}`);
+    });
+
+    function sendMessage() {
+      const groupId = document.getElementById("groupId").value;
+      const message = document.getElementById("message").value;
+      if (groupId && message) {
+        socket.emit("sendGroupMessage", { groupId, message });
+        document.getElementById("message").value = "";
+      } else {
+        alert("Group ID and message are required");
+      }
+    }
+
+    // Fetch chat history
+    async function fetchChats(groupId) {
+      const response = await fetch(`/api/chats/${groupId}`, {
+        headers: { Authorization: `Bearer your_jwt_token` },
+      });
+      const chats = await response.json();
+      const chatDiv = document.getElementById("chat");
+      chats.forEach((chat) => {
+        chatDiv.innerHTML += `<p><b>User ${chat.sender.id}:</b> ${chat.message} (${new Date(chat.sentAt).toLocaleString()})</p>`;
+      });
+    }
+  </script>
+</body>
+</html>
