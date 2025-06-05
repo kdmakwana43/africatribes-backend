@@ -312,6 +312,7 @@ export const getGroupChatsConversation = async (req, res) => {
     const result = await sequelize.query(
       `
       SELECT 
+          g.id AS \`groupId\`,
           g.name AS \`group\`,
           gc.message AS \`lastMessage\`,
           gc.sentAt AS \`lastMessageTime\`,
