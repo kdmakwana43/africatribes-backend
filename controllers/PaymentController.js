@@ -68,12 +68,20 @@ export const verifyPayment = async (req, res) => {
 
      // Find the subscription
     const subscription = await SubscriptionModel.findOne({
-      where: { paymentMethod: "PayNow", paymentStatus: "Pending", userId: req.Auth.id, verificationToken : req.body.verificationToken },
+      where: { paymentMethod: "PayNow",  userId: req.Auth.id, verificationToken : req.body.verificationToken },
       order: [["createdAt", "DESC"]],
     });
 
     if (!subscription) {
       return __._throwError(res, new Error("Subscription not found or paymentId mismatch"));
+    }
+
+    if(subscription.status == "Completed"){
+      return __.res(res, { status: "success", message: "Payment already verified" }, 200);
+    }
+
+    if(subscription.status == "Failed"){
+      return __._throwError(res, new Error("Payment already failed"));
     }
 
     // Retrieve PaymentIntent from Stripe
