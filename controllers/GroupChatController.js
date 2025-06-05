@@ -337,7 +337,7 @@ export const getGroupChatsConversation = async (req, res) => {
       }
     );
 
-    return res.status(200).json(result);
+     __.res(res, result, 200);
   } catch (error) {
     console.error("Error fetching group chat summaries:", error);
     return res.status(500).json({ error: "Internal server error" });
