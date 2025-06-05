@@ -44,6 +44,16 @@ const SubscriptionModel = sequelize.define(
         },
       },
     },
+    verificationToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: true,
+      validate: {
+        notEmpty: {
+          msg: "Verification token cannot be empty if provided",
+        },
+      },
+    },
     paymentUrl: {
       type: DataTypes.STRING,
       allowNull: true,
@@ -77,11 +87,11 @@ const SubscriptionModel = sequelize.define(
     currency: {
       type: DataTypes.STRING(3),
       allowNull: false,
-      defaultValue: "ZWL",
+      defaultValue: "USD",
       validate: {
         is: {
           args: /^[A-Z]{3}$/,
-          msg: "Currency must be a valid 3-letter ISO code (e.g., ZWL, INR)",
+          msg: "Currency must be a valid 3-letter ISO code (e.g., USD, INR)",
         },
       },
     },

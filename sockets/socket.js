@@ -41,15 +41,15 @@ export default function setupSocket(io) {
         }
         socket.join(`group:${groupId}`);
         socket.emit("joinedGroup", { groupId });
+        console.log('User joined group:', groupId);
       } catch (error) {
         socket.emit("error", { message: error.message });
-      }
+      }``
     });
 
     // Handle sending group messages
     socket.on("sendGroupMessage", async ({ groupId, message }) => {
       try {
-
 
         console.log('message',groupId,message,socket.user)
 

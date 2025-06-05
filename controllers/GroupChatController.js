@@ -268,8 +268,22 @@ export const getGroups = async (req, res) => {
   try {
 
     const groups = await GroupModel.findAll({
-      where: { creatorId: req.Auth.id },
       order: [["id", "ASC"]],
+      include: [
+        {
+          model: GroupMembersModel,
+          as: "members",
+          include: [
+            {
+              model: Users,
+              as: "user",
+              attributes: ["id", "first_name", "last_name", "village", "tribe", "profile"],
+            },
+          ],
+          required: true,
+        },
+      ],
+
     });
 
     __.res(res, groups, 200);
@@ -307,6 +321,8 @@ export const groupDetails = async (req, res) => {
     __._throwError(res, error);
   }
 };
+
+
 export const getGroupChatsConversation = async (req, res) => {
   try {
     const result = await sequelize.query(
