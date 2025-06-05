@@ -2,6 +2,7 @@ import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
 import Users from "./UserModel.js";
 import GroupMembersModel from "./GroupMembersModel.js";
+import GroupChatsModel from "./GroupChatsModel.js";
 
 const GroupModel = sequelize.define(
   "Groups",
@@ -41,5 +42,6 @@ const GroupModel = sequelize.define(
 // Associations
 GroupModel.belongsTo(Users, { foreignKey: "creatorId", as: "creator" });
 GroupModel.hasMany(GroupMembersModel, { foreignKey: "groupId", as: "members" });
+
 
 export default GroupModel;

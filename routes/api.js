@@ -105,6 +105,7 @@ Router.post("/chats/group/create", _auth, GroupChatController.createGroup);
 Router.post("/chats/groups", _auth, GroupChatController.getGroups);
 Router.post("/chats/group-details", _auth, GroupChatController.groupDetails);
 Router.post("/chats/messages", _auth, GroupChatController.getGroupChats);
+Router.post("/chats/history", _auth, GroupChatController.getGroupChatsConversation);
 Router.post("/chats/group/add-members", _auth, GroupChatController.addMember);
 Router.post("/chats/group/remove-member", _auth, GroupChatController.removeMember);
 Router.post("/chats/member/role-change", _auth, GroupChatController.changeRole);

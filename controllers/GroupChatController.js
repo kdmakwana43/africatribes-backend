@@ -1,4 +1,4 @@
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import { __ } from "../config/global.js";
 import Users from "../models/UserModel.js";
 import { th } from "@faker-js/faker";
@@ -6,6 +6,7 @@ import GroupChatsModel from "../models/GroupChatsModel.js";
 import GroupMembersModel from "../models/GroupMembersModel.js";
 import GroupModel from "../models/GroupModel.js";
 import moment from "moment";
+import sequelize from "../config/database.js";
 
 
 export const createGroup = async (req, res) => {
@@ -304,5 +305,40 @@ export const groupDetails = async (req, res) => {
     __.res(res, groups, 200);
   } catch (error) {
     __._throwError(res, error);
+  }
+};
+export const getGroupChatsConversation = async (req, res) => {
+  try {
+    const result = await sequelize.query(
+      `
+      SELECT 
+          g.name AS \`group\`,
+          gc.message AS \`lastMessage\`,
+          gc.sentAt AS \`lastMessageTime\`,
+          u.first_name AS \`lastMessageSender\`
+      FROM \`Groups\` g
+      INNER JOIN GroupMembers gm ON g.id = gm.groupId
+      LEFT JOIN (
+          SELECT gc1.*
+          FROM GroupChats gc1
+          INNER JOIN (
+              SELECT groupId, MAX(sentAt) AS latestSentAt
+              FROM GroupChats
+              GROUP BY groupId
+          ) gc2 ON gc1.groupId = gc2.groupId AND gc1.sentAt = gc2.latestSentAt
+      ) gc ON g.id = gc.groupId
+      LEFT JOIN Users u ON gc.userId = u.id
+      WHERE gm.userId = :userId
+      `,
+      {
+        replacements: { userId: req.Auth.id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("Error fetching group chat summaries:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
