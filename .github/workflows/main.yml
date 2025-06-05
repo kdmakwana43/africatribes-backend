@@ -19,6 +19,7 @@ jobs:
           sshpass -p "${{ secrets.PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.HOST }} <<EOF
             cd /var/www/africatribes-backend
             git pull origin master
+            npm install
             cp .env.production .env
             pm2 restart backend
           EOF

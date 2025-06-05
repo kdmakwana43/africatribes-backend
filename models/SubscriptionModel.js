@@ -44,34 +44,44 @@ const SubscriptionModel = sequelize.define(
         },
       },
     },
-    paymentId: {
+    paymentUrl: {
       type: DataTypes.STRING,
       allowNull: true,
       unique: true,
       validate: {
         notEmpty: {
-          msg: "Payment ID cannot be empty if provided",
+          msg: "Payment URL cannot be empty if provided",
+        },
+      },
+    },
+    pollUrl: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: true,
+      validate: {
+        notEmpty: {
+          msg: "Poll URL cannot be empty if provided",
         },
       },
     },
     paymentMethod: {
-      type: DataTypes.ENUM("Stripe"),
+      type: DataTypes.ENUM("Stripe","PayNow"),
       allowNull: false,
       validate: {
         isIn: {
-          args: [["Stripe"]],
-          msg: "Payment method must be one of: Stripe",
+          args: [["Stripe","PayNow"]],
+          msg: "Payment method must be one of: Stripe, PayNow",
         },
       },
     },
     currency: {
       type: DataTypes.STRING(3),
       allowNull: false,
-      defaultValue: "USD",
+      defaultValue: "ZWL",
       validate: {
         is: {
           args: /^[A-Z]{3}$/,
-          msg: "Currency must be a valid 3-letter ISO code (e.g., USD, INR)",
+          msg: "Currency must be a valid 3-letter ISO code (e.g., ZWL, INR)",
         },
       },
     },
