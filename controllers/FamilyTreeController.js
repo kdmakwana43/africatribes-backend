@@ -710,7 +710,7 @@ export const getFamilyBalkanTree = async (req, res) => {
 
     // Transform the data to BALKAN FamilyTreeJS format
     const tree = buildFamilyTree(familyMembers);
-    const result = transformFamilyTreeKitkat(tree);
+    const result = transformFamilyTreeData(tree);
 
     __.res(res, result, 200);
   } catch (error) {
