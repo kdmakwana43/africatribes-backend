@@ -121,6 +121,7 @@ function transformFamilyTreeKitkat(data) {
     const idMap = new Map();
     let newId = 1;
 
+
     // Collect all individuals by traversing the nested structure
     const individuals = [];
 
@@ -149,7 +150,7 @@ function transformFamilyTreeKitkat(data) {
 
         // Add photo if available
         if (person.profile) {
-            newPerson.photo = person.profile;
+            newPerson.photo = person.profile.match('http') ? person.profile : `${process.env.BASE_URL}${person.profile}`;
         }
 
         // Determine relationships
