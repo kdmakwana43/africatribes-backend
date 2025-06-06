@@ -158,9 +158,8 @@ function transformFamilyTreeKitkat(data) {
             newPerson.photo = person.profile;
         }
 
-        // Determine relationships
-        if (person.parentId) {
-            // Check if parentId corresponds to a father or mother
+        // Determine parent relationships (only for individuals with a valid parentId)
+        if (person.parentId && person.relationship !== "Spouse") {
             const parent = individuals.find(p => p.id === person.parentId);
             if (parent) {
                 if (parent.gender === "male") {
@@ -191,8 +190,8 @@ function transformFamilyTreeKitkat(data) {
             newPerson.childIds = person.children.map(child => idMap.get(child.id));
         }
 
-        // Add sibling IDs (siblings share the same parentId and are children of the same parents)
-        if (person.parentId) {
+        // Add sibling IDs (siblings share the same parents)
+        if (person.parentId && person.relationship !== "Spouse") {
             const parent = individuals.find(p => p.id === person.parentId);
             if (parent) {
                 // Get all children of the parent
@@ -201,9 +200,9 @@ function transformFamilyTreeKitkat(data) {
                 const spouseChildren = parent.spouses.length > 0
                     ? parent.spouses[0].children.map(child => idMap.get(child.id))
                     : [];
-                // Combine and filter to get siblings (exclude self)
+                // Combine and filter to get siblings (exclude self and spouses)
                 const siblingIds = [...new Set([...parentChildren, ...spouseChildren])]
-                    .filter(id => id !== newPerson.id);
+                    .filter(id => id !== newPerson.id && individuals.find(p => idMap.get(p.id) === id).relationship !== "Spouse");
                 if (siblingIds.length > 0) {
                     newPerson.siblingIds = siblingIds;
                 }
