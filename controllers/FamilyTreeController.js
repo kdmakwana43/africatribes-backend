@@ -117,7 +117,7 @@ function transformFamilyTreeData(inputData) {
 }
 
 function transformFamilyTreeKitkat(data) {
-  // Map to store new IDs (original ID -> new ID)
+  / // Map to store new IDs (original ID -> new ID)
     const idMap = new Map();
     let newId = 1;
 
@@ -158,7 +158,7 @@ function transformFamilyTreeKitkat(data) {
             newPerson.photo = person.profile;
         }
 
-        // Determine parent relationships (only for individuals with a valid parentId)
+        // Determine parent relationships (only for non-spouse individuals with a valid parentId)
         if (person.parentId && person.relationship !== "Spouse") {
             const parent = individuals.find(p => p.id === person.parentId);
             if (parent) {
@@ -180,31 +180,51 @@ function transformFamilyTreeKitkat(data) {
             }
         }
 
-        // Add spouse IDs
-        if (person.spouses.length > 0) {
-            newPerson.spouseIds = person.spouses.map(spouse => idMap.get(spouse.id));
+        // Add spouse IDs (for individuals with spouses or marked as a spouse)
+        const isSpouse = individuals.some(p => p.spouses.some(s => s.id === person.id));
+        if (person.spouses.length > 0 || isSpouse) {
+            // Collect spouse IDs from person's spouses array
+            let spouseIds = person.spouses.map(spouse => idMap.get(spouse.id));
+            // Add person as a spouse if they appear in another person's spouses array
+            individuals.forEach(p => {
+                if (p.spouses.some(s => s.id === person.id) && !spouseIds.includes(idMap.get(p.id))) {
+                    spouseIds.push(idMap.get(p.id));
+                }
+            });
+            if (spouseIds.length > 0) {
+                newPerson.spouseIds = spouseIds.sort((a, b) => a - b);
+            }
         }
 
-        // Add child IDs
-        if (person.children.length > 0) {
-            newPerson.childIds = person.children.map(child => idMap.get(child.id));
+        // Add child IDs (from person's children and as spouse's children)
+        let childIds = person.children.map(child => idMap.get(child.id));
+        // Add children from spouse's children array if person is a spouse
+        if (isSpouse) {
+            individuals.forEach(p => {
+                if (p.spouses.some(s => s.id === person.id)) {
+                    childIds = [...childIds, ...p.children.map(child => idMap.get(child.id))];
+                }
+            });
+        }
+        if (childIds.length > 0) {
+            newPerson.childIds = [...new Set(childIds)].sort((a, b) => a - b);
         }
 
-        // Add sibling IDs (siblings share the same parents)
+        // Add sibling IDs (siblings share the same parents, exclude spouses)
         if (person.parentId && person.relationship !== "Spouse") {
             const parent = individuals.find(p => p.id === person.parentId);
             if (parent) {
                 // Get all children of the parent
-                const parentChildren = parent.children.map(child => idMap.get(child.id));
+                let parentChildren = parent.children.map(child => idMap.get(child.id));
                 // Get children of the parent's spouse (if any)
-                const spouseChildren = parent.spouses.length > 0
+                let spouseChildren = parent.spouses.length > 0
                     ? parent.spouses[0].children.map(child => idMap.get(child.id))
                     : [];
                 // Combine and filter to get siblings (exclude self and spouses)
                 const siblingIds = [...new Set([...parentChildren, ...spouseChildren])]
                     .filter(id => id !== newPerson.id && individuals.find(p => idMap.get(p.id) === id).relationship !== "Spouse");
                 if (siblingIds.length > 0) {
-                    newPerson.siblingIds = siblingIds;
+                    newPerson.siblingIds = siblingIds.sort((a, b) => a - b);
                 }
             }
         }
