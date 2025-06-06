@@ -117,7 +117,7 @@ function transformFamilyTreeData(inputData) {
 }
 
 function transformFamilyTreeKitkat(data) {
-    // Map to store new IDs (original ID -> new ID)
+  // Map to store new IDs (original ID -> new ID)
     const idMap = new Map();
     let newId = 1;
 
@@ -191,11 +191,22 @@ function transformFamilyTreeKitkat(data) {
             newPerson.childIds = person.children.map(child => idMap.get(child.id));
         }
 
-        // Add sibling IDs (siblings share the same parentId)
+        // Add sibling IDs (siblings share the same parentId and are children of the same parents)
         if (person.parentId) {
-            const siblings = individuals.filter(p => p.parentId === person.parentId && p.id !== person.id);
-            if (siblings.length > 0) {
-                newPerson.siblingIds = siblings.map(sibling => idMap.get(sibling.id));
+            const parent = individuals.find(p => p.id === person.parentId);
+            if (parent) {
+                // Get all children of the parent
+                const parentChildren = parent.children.map(child => idMap.get(child.id));
+                // Get children of the parent's spouse (if any)
+                const spouseChildren = parent.spouses.length > 0
+                    ? parent.spouses[0].children.map(child => idMap.get(child.id))
+                    : [];
+                // Combine and filter to get siblings (exclude self)
+                const siblingIds = [...new Set([...parentChildren, ...spouseChildren])]
+                    .filter(id => id !== newPerson.id);
+                if (siblingIds.length > 0) {
+                    newPerson.siblingIds = siblingIds;
+                }
             }
         }
 
