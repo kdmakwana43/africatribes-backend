@@ -117,7 +117,7 @@ function transformFamilyTreeData(inputData) {
 }
 
 function transformFamilyTreeKitkat(data) {
-  / // Map to store new IDs (original ID -> new ID)
+  /// Map to store new IDs (original ID -> new ID)
     const idMap = new Map();
     let newId = 1;
 
