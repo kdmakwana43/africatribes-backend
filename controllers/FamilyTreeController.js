@@ -155,7 +155,7 @@ function transformFamilyTreeKitkat(data) {
 
         // Add photo if available
         if (person.profile) {
-            newPerson.photo = person.profile;
+            newPerson.photo = person.profile.match('http') ? person.profile : `${process.env.BASE_URL}${person.profile}`;
         }
 
         // Determine parent relationships (only for non-spouse individuals with a valid parentId)
