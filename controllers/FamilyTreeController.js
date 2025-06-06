@@ -121,7 +121,6 @@ function transformFamilyTreeKitkat(data) {
     const idMap = new Map();
     let newId = 1;
 
-
     // Collect all individuals by traversing the nested structure
     const individuals = [];
 
@@ -135,22 +134,28 @@ function transformFamilyTreeKitkat(data) {
     // Start collecting from the root
     data.forEach(root => collectIndividuals(root));
 
-    // Assign new IDs (1 to N)
+    // Assign new IDs (1 to N), prioritizing "Myself"
+    const myself = individuals.find(p => p.relationship === "Myself");
+    if (myself) {
+        idMap.set(myself.id, newId++);
+    }
     individuals.forEach(person => {
-        idMap.set(person.id, newId++);
+        if (person.relationship !== "Myself" && !idMap.has(person.id)) {
+            idMap.set(person.id, newId++);
+        }
     });
 
     // Transform each individual
     const result = individuals.map(person => {
         const newPerson = {
             id: idMap.get(person.id),
-            originID: idMap.get(person.id),
+            originalId: person.id,
             name: `${person.first_name} ${person.surname}`.trim()
         };
 
         // Add photo if available
         if (person.profile) {
-            newPerson.photo = person.profile.match('http') ? person.profile : `${process.env.BASE_URL}${person.profile}`;
+            newPerson.photo = person.profile;
         }
 
         // Determine relationships
@@ -197,7 +202,7 @@ function transformFamilyTreeKitkat(data) {
         return newPerson;
     });
 
-    // Sort by new ID to ensure consistent order
+    // Sort to place "Myself" (lowest ID) first, then others by new ID
     return result.sort((a, b) => a.id - b.id);
 }
 
