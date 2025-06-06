@@ -267,23 +267,22 @@ export const getGroupChats = async (req, res) => {
 export const getGroups = async (req, res) => {
   try {
 
-    const groups = await GroupModel.findAll({
-      order: [["id", "ASC"]],
-      include: [
-        {
-          model: GroupMembersModel,
-          as: "members",
-          include: [
-            {
-              model: Users,
-              as: "user",
-              attributes: ["id", "first_name", "last_name", "village", "tribe", "profile"],
-            },
-          ],
-          required: true,
-        },
-      ],
 
+    const myGroups = await GroupMembersModel.findAll({
+      where: { userId: req.Auth.id },
+      attributes: ["groupId"],
+    });
+
+    const groups = await GroupModel.findAll({
+      where : { id : myGroups.map(group => group.groupId) },
+      order: [["id", "ASC"]],
+      include : [
+        {
+          model: Users,
+          as: "creator",
+          attributes: ["id", "first_name", "last_name", "profile"],
+        }
+      ]
     });
 
     __.res(res, groups, 200);
@@ -325,33 +324,33 @@ export const groupDetails = async (req, res) => {
 
 export const getGroupChatsConversation = async (req, res) => {
   try {
-    const result = await sequelize.query(
-      `
-      SELECT 
-          g.id AS \`groupId\`,
-          g.name AS \`group\`,
-          gc.message AS \`lastMessage\`,
-          gc.sentAt AS \`lastMessageTime\`,
-          u.first_name AS \`lastMessageSender\`
-      FROM \`Groups\` g
-      INNER JOIN GroupMembers gm ON g.id = gm.groupId
-      LEFT JOIN (
-          SELECT gc1.*
-          FROM GroupChats gc1
-          INNER JOIN (
-              SELECT groupId, MAX(sentAt) AS latestSentAt
-              FROM GroupChats
-              GROUP BY groupId
-          ) gc2 ON gc1.groupId = gc2.groupId AND gc1.sentAt = gc2.latestSentAt
-      ) gc ON g.id = gc.groupId
-      LEFT JOIN Users u ON gc.userId = u.id
-      WHERE gm.userId = :userId
-      `,
-      {
-        replacements: { userId: req.Auth.id },
-        type: sequelize.QueryTypes.SELECT,
-      }
-    );
+    // const result = await sequelize.query(
+    //   `
+    //   SELECT 
+    //       g.id AS \`groupId\`,
+    //       g.name AS \`group\`,
+    //       gc.message AS \`lastMessage\`,
+    //       gc.sentAt AS \`lastMessageTime\`,
+    //       u.first_name AS \`lastMessageSender\`
+    //   FROM \`Groups\` g
+    //   INNER JOIN GroupMembers gm ON g.id = gm.groupId
+    //   LEFT JOIN (
+    //       SELECT gc1.*
+    //       FROM GroupChats gc1
+    //       INNER JOIN (
+    //           SELECT groupId, MAX(sentAt) AS latestSentAt
+    //           FROM GroupChats
+    //           GROUP BY groupId
+    //       ) gc2 ON gc1.groupId = gc2.groupId AND gc1.sentAt = gc2.latestSentAt
+    //   ) gc ON g.id = gc.groupId
+    //   LEFT JOIN Users u ON gc.userId = u.id
+    //   WHERE gm.userId = :userId
+    //   `,
+    //   {
+    //     replacements: { userId: req.Auth.id },
+    //     type: sequelize.QueryTypes.SELECT,
+    //   }
+    // );
 
      __.res(res, result, 200);
   } catch (error) {

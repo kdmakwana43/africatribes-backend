@@ -76,23 +76,25 @@ export const verifyPayment = async (req, res) => {
       return __._throwError(res, new Error("Subscription not found or paymentId mismatch"));
     }
 
-    if(subscription.status == "Completed"){
-      return __.res(res, { status: "success", message: "Payment already verified" }, 200);
+    console.log("Subscription found:", subscription.paymentStatus);
+
+    if(subscription.paymentStatus == "Completed"){
+      __.res(res, { status: "success", message: "Payment already verified" }, 200);
+      return false
     }
 
-    if(subscription.status == "Failed"){
+    if(subscription.paymentStatus == "Failed"){
       return __._throwError(res, new Error("Payment already failed"));
     }
 
     // Retrieve PaymentIntent from Stripe
 
+
     let transaction = await paynow.pollTransaction(subscription.pollUrl);
     console.log("Payment Status:", transaction);
     if (transaction && transaction.status === "paid") {
-        await subscription.update({
-          paymentStatus: "Completed",
-          updatedAt: new Date(),
-        });
+        subscription.paymentStatus = "Completed";
+        await subscription.save();
 
         const user = await Users.findByPk(req.Auth.id);
       if (user) {
