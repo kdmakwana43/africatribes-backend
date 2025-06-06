@@ -116,6 +116,90 @@ function transformFamilyTreeData(inputData) {
   return result;
 }
 
+function transformFamilyTreeKitkat(data) {
+    // Map to store new IDs (original ID -> new ID)
+    const idMap = new Map();
+    let newId = 1;
+
+    // Collect all individuals by traversing the nested structure
+    const individuals = [];
+
+    function collectIndividuals(person) {
+        if (!person || individuals.some(p => p.id === person.id)) return;
+        individuals.push(person);
+        person.spouses.forEach(spouse => collectIndividuals(spouse));
+        person.children.forEach(child => collectIndividuals(child));
+    }
+
+    // Start collecting from the root
+    data.forEach(root => collectIndividuals(root));
+
+    // Assign new IDs (1 to N)
+    individuals.forEach(person => {
+        idMap.set(person.id, newId++);
+    });
+
+    // Transform each individual
+    const result = individuals.map(person => {
+        const newPerson = {
+            id: idMap.get(person.id),
+            originID: idMap.get(person.id),
+            name: `${person.first_name} ${person.surname}`.trim()
+        };
+
+        // Add photo if available
+        if (person.profile) {
+            newPerson.photo = person.profile;
+        }
+
+        // Determine relationships
+        if (person.parentId) {
+            // Check if parentId corresponds to a father or mother
+            const parent = individuals.find(p => p.id === person.parentId);
+            if (parent) {
+                if (parent.gender === "male") {
+                    newPerson.fatherId = idMap.get(parent.id);
+                } else if (parent.gender === "female") {
+                    newPerson.motherId = idMap.get(parent.id);
+                }
+            }
+
+            // Find the other parent (spouse of the known parent)
+            if (parent && parent.spouses.length > 0) {
+                const otherParent = parent.spouses[0];
+                if (otherParent.gender === "male" && !newPerson.fatherId) {
+                    newPerson.fatherId = idMap.get(otherParent.id);
+                } else if (otherParent.gender === "female" && !newPerson.motherId) {
+                    newPerson.motherId = idMap.get(otherParent.id);
+                }
+            }
+        }
+
+        // Add spouse IDs
+        if (person.spouses.length > 0) {
+            newPerson.spouseIds = person.spouses.map(spouse => idMap.get(spouse.id));
+        }
+
+        // Add child IDs
+        if (person.children.length > 0) {
+            newPerson.childIds = person.children.map(child => idMap.get(child.id));
+        }
+
+        // Add sibling IDs (siblings share the same parentId)
+        if (person.parentId) {
+            const siblings = individuals.filter(p => p.parentId === person.parentId && p.id !== person.id);
+            if (siblings.length > 0) {
+                newPerson.siblingIds = siblings.map(sibling => idMap.get(sibling.id));
+            }
+        }
+
+        return newPerson;
+    });
+
+    // Sort by new ID to ensure consistent order
+    return result.sort((a, b) => a.id - b.id);
+}
+
 
 
 
@@ -590,7 +674,7 @@ export const getFamilyBalkanTree = async (req, res) => {
 
     // Transform the data to BALKAN FamilyTreeJS format
     const tree = buildFamilyTree(familyMembers);
-    const result = transformFamilyTreeData(tree);
+    const result = transformFamilyTreeKitkat(tree);
 
     __.res(res, result, 200);
   } catch (error) {

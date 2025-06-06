@@ -28,8 +28,8 @@ const InvitationModel = sequelize.define(
       allowNull: false,
       validate: {
         isIn: {
-          args: [["Pending", "Approved"]],
-          msg: "Category must be either 'Pending' or 'Approved'.",
+          args: [["Pending", "Approved",'Rejected']],
+          msg: "Category must be either 'Pending' or 'Approved' or 'Rejected'.",
         },
       },
     },
