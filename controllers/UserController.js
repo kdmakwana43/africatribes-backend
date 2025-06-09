@@ -880,3 +880,102 @@ export const searchFromAll = async (req, res) => {
     __._throwError(res, error);
   }
 }
+
+
+
+
+export const getLandingPageStates = async (req, res) => {
+  try {
+
+    const totalUniqueFamily = await Users.count({
+      distinct: true,
+      col: 'last_name',
+      where: {
+        status: 'Active',
+        last_name: {
+         [Op.and]: [
+          { [Op.ne]: null },
+          { [Op.ne]: '' },
+        ]
+        },
+      },
+    })
+
+    const totalUniqueTribes = await Users.count({
+      distinct: true,
+      col: 'tribe',
+      where: {
+        status: 'Active',
+        tribe: {
+         [Op.and]: [
+          { [Op.ne]: null },
+          { [Op.ne]: '' },
+        ]
+        },
+      },
+    })
+
+    const totalUniqueChiefs = await Users.count({
+      distinct: true,
+      col: 'chief',
+      where: {
+        status: 'Active',
+        chief: {
+          [Op.and]: [
+          { [Op.ne]: null },
+          { [Op.ne]: '' },
+        ]
+        },
+      },
+    })
+
+    __.res(res, { totalUniqueFamily, totalUniqueTribes, totalUniqueChiefs }, 200);
+  } catch (error) {
+    __._throwError(res, error);
+  }
+}
+
+
+export const getUsersGroup = async (req, res) => {
+  try {
+
+    if(!req.body.group) throw new Error('Please provide a group name');
+
+    const { skip = 0, limit = 10, sort = "createdAt:DESC" } = req.body;
+    const [sortField, sortOrder] = sort.split(":");
+
+    const condition = {
+      status: 'Active',
+      [req.body.group]: {
+        [Op.and]: [
+          { [Op.ne]: null },
+          { [Op.ne]: '' },
+        ]
+      },
+    };
+
+    const users = await Users.findAll({
+      distinct: true,
+      col: req.body.group,
+      where: condition,
+      offset: parseInt(skip),
+      limit: parseInt(limit),
+      order: [[sortField || 'createdAt', sortOrder?.toUpperCase() || 'DESC']],
+      attributes: ['id', 'first_name', 'last_name','gender','profile',req.body.group],
+    })
+
+    if(req.body.wantCount){
+      const totalMatchCount = await Users.count({
+        distinct: true,
+        col: req.body.group,
+        where: condition,
+      });
+      __.res(res, { users, totalMatchCount }, 200);
+      return false;
+    }
+
+    __.res(res, users, 200);
+  } catch (error) {
+    __._throwError(res, error);
+  }
+}

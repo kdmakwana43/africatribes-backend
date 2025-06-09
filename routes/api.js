@@ -37,6 +37,8 @@ Router.post("/newsletter/subscribe", UserController.subscribeNewsletter);
 
 Router.post("/users", UserController.getUsers);
 Router.post("/users/count", UserController.totalUsersCount);
+Router.post("/lading-page/states", UserController.getLandingPageStates);
+Router.post("/users/group", UserController.getUsersGroup);
 
 // contribution
 Router.post("/contribution/create", _auth, UserController.addContribution);
