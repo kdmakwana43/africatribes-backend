@@ -75,6 +75,7 @@ Router.post("/family/member/create-parent",_auth,_familyPermission,upload.single
 Router.post("/family/member/create-sibling",_auth,_familyPermission,upload.single("profile"),FamilyTreeController.createSibling);
 Router.post("/family/members",_auth,_familyPermission,FamilyTreeController.getFamilyMembers);
 Router.post("/family/premium/tree",_auth,_familyPermission,FamilyTreeController.getFamilyBalkanTree);
+Router.post("/family/premium/save-tree",_auth,_familyPermission,FamilyTreeController.createBalkanNewNodes);
 
 
 
