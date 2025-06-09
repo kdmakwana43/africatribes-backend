@@ -44,7 +44,7 @@ export const createGroup = async (req, res) => {
 
     // await Promise.all(memberPromises);
 
-    __.res(res, 'New Group created successfully!', 200);
+    __.res(res, group, 200);
   } catch (error) {
     console.error("Error creating group:", error);
     __._throwError(res, error);
