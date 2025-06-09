@@ -488,7 +488,16 @@ export const getUsers = async (req, res) => {
             { tribe: { [Op.like]: `%${searchTerm}%` } },
             { hometown: { [Op.like]: `%${searchTerm}%` } },
           ]
+    }
+
+    const masterSearchFields = ['first_name', 'last_name', 'village', 'tribe', 'hometown', 'chief', 'alias', 'totem'];
+    masterSearchFields.forEach(field => {
+      if (req.body[field] && req.body[field].trim() !== '') {
+        condition[field] = req.body[field].trim();
       }
+    });
+
+    console.log('condition',condition)
 
     const users = await Users.findAll({
       where : condition,
@@ -507,8 +516,6 @@ export const getUsers = async (req, res) => {
       where : condition,
     })
 
-    console.log('totalMatchCount',totalMatchCount)
-    
     __.res(res, { users, totalMatchCount }, 200);
 
   } catch (error) {
@@ -766,5 +773,110 @@ export const getSuggestedRelations = async (req, res) => {
 
   } catch (error) {
      __._throwError(res, error);
+  }
+}
+
+
+export const searchFromAll = async (req, res) => {
+  try {
+
+    if(!req.body.search || req.body.search.trim() === '') throw new Error('Please provide a search term');
+
+    const condition = {
+      status : 'Active'
+    }
+
+   
+
+    if (req.body.search && req.body.search.trim() !== '') {
+        const searchTerm = req.body.search.trim();
+        condition[Op.or]= [
+            { first_name: { [Op.like]: `%${searchTerm}%` } },
+            { last_name: { [Op.like]: `%${searchTerm}%` } },
+            { village: { [Op.like]: `%${searchTerm}%` } },
+            { tribe: { [Op.like]: `%${searchTerm}%` } },
+            { hometown: { [Op.like]: `%${searchTerm}%` } },
+            { chief: { [Op.like]: `%${searchTerm}%` } },
+          ]
+    }
+
+    const users = await Users.findAll({
+      where : condition,
+      offset : 0,
+      limit : 25,
+      order : [[ 'createdAt','DESC' ]],
+      attributes: ['id', 'first_name', 'last_name','email','gender','profile','village','tribe','hometown'],
+      include: [{
+        model: CountryModel,
+        as: 'country',
+        attributes: ['name'],
+      }],
+    })
+
+
+    const results = {
+      users : {
+        count : users.length,
+        data : users,
+        label : 'Users'
+      }
+    }
+
+    // Search in contributions Places
+    if (req.body.search && req.body.search.trim() !== '') {
+      const searchTerm = req.body.search.trim();
+
+      const contributionsPlaces = await ContributionModel.findAll({
+        where: {
+          [Op.or]: [
+            { title: { [Op.like]: `%${searchTerm}%` } },
+            { description: { [Op.like]: `%${searchTerm}%` } },
+          ],
+          category : 'Places',
+        },
+        limit: 25,
+        order: [['createdAt', 'DESC']],
+        include: [{
+          model: Users,
+          as: 'user',
+          attributes: ['first_name', 'last_name', 'profile'],
+        }],
+      });
+
+
+      const contributionsPeople = await ContributionModel.findAll({
+        where: {
+          [Op.or]: [
+            { title: { [Op.like]: `%${searchTerm}%` } },
+            { description: { [Op.like]: `%${searchTerm}%` } },
+          ],
+          category : 'People',
+        },
+        include: [{
+          model: Users,
+          as: 'user',
+          attributes: ['first_name', 'last_name', 'profile'],
+        }],
+        limit: 25,
+        order: [['createdAt', 'DESC']],
+      });
+
+      results.contributionsPlaces = {
+        count: contributionsPlaces.length,
+        data: contributionsPlaces,
+        label: 'Contributions Places',
+      };
+
+      results.contributionsPeople = {
+        count: contributionsPeople.length,
+        data: contributionsPeople,
+        label: 'Contributions People',
+      };
+
+    }
+    __.res(res, results, 200);
+
+  } catch (error) {
+    __._throwError(res, error);
   }
 }

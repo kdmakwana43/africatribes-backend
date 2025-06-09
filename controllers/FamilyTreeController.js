@@ -718,3 +718,54 @@ export const getFamilyBalkanTree = async (req, res) => {
     __._throwError(res, error);
   }
 };
+
+
+export const createBalkanNewNodes = async (req, res) => {
+  try {
+
+    __.validation(["members"], req.body);
+
+    if(!Array.isArray(req.body.members) || req.body.members.length == 0) throw new Error('Please provide valid members data to create')
+
+
+    const finalData = [];
+    for (const member of req.body.members) {
+      
+      var relationship = ''
+
+    }
+
+
+
+     const conditionRoot = { 
+      userId : req.Auth.id,
+      id : req.body.id
+    }
+
+    const currentMember =  await FamilyTreesModel.findOne({where : conditionRoot})
+    if(!currentMember) throw new Error('Oops! Selected member not found')
+
+ 
+    var data = {
+      first_name: req.body.first_name,
+      userId: req.Auth.id,
+      parentId : currentMember.parentId
+    };
+
+    data = prepareMemberData(req.body,data)
+    if (req.file) {
+      data.profile = `/images/${req.file.filename}`;
+    }
+
+    const createdNode = await FamilyTreesModel.create(data);
+    if(!createdNode) throw new Error('Oops! Failed to create this member! Please try again')
+
+    __.res(
+      res,
+      createdNode.toJSON(),
+      200
+    );
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};

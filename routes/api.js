@@ -52,6 +52,8 @@ Router.post("/invitations/accepted", _auth, UserController.getAcceptedInvitation
 Router.post("/invitation/delete", _auth, UserController.deleteInvitation);
 Router.post("/invitations/suggested", _auth, UserController.getSuggestedRelations);
 
+Router.post("/search/all", _auth, UserController.searchFromAll);
+
 
 
 
