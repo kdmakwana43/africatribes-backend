@@ -518,7 +518,7 @@ export const updateFamilyNode = async (req, res) => {
 
     if(!node) throw new Error('Oops! unable to find this member!')
 
-   const allowedFields = ['first_name',"surname", "dob", "dod","birthTown","profession","relationship"];
+   const allowedFields = ['first_name',"last_name", "dob", "dod","birthTown","profession","relationship"];
 
     allowedFields.forEach((field) => {
       if (req.body[field] && req.body[field] != '') {
