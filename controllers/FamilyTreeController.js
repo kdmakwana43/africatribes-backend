@@ -63,12 +63,12 @@ function transformFamilyTreeData(inputData) {
     const entry = {
       id: member.id,
       gender: member.gender === 'male' ? 'male' : 'female',
-      name: `${member.first_name || "NR"} ${member.surname || ""}`.trim()
+      name: `${member.first_name || ""} ${member.surname || ""}`.trim(),
+      dob: member.dob ? moment(member.dob).format('YYYY-MM-DD') : null,
+      relationship: member.relationship || "",
+      birthTown: member.birthTown || "",
+      profession: member.profession || "",
     };
-
-    if (member.dob) {
-      entry.born = member.dob;
-    }
 
     if (member.profile) {
       entry.photo = __.assetFullURL(member.profile);
@@ -716,9 +716,9 @@ export const getFamilyBalkanTree = async (req, res) => {
     const familyMembers = await FamilyTreesModel.findAll({
       where: { userId: req.Auth.id },
       include: [
-        { model: FamilyTreesModel, as: 'children', attributes: ['id', 'relationship'] },
-        { model: FamilyTreesModel, as: 'parent', attributes: ['id', 'relationship'] },
-       
+        { model: FamilyTreesModel, as: 'children', attributes: ['id', 'relationship', 'dob', 'dod', 'birthTown', 'profession'] },
+        { model: FamilyTreesModel, as: 'parent', attributes: ['id', 'relationship', 'dob', 'dod', 'birthTown', 'profession'] },
+
       ],
     });
 
