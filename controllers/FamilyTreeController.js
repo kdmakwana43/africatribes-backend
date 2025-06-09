@@ -138,6 +138,7 @@ const createMemberNode = async (req) =>  {
       dod: req.body.dod || null,
       birthTown: req.body.birthTown || null,
       profession: req.body.profession || null,
+      balkan_key: req.body.balkan_key || null,
       profile: req.file ? `/images/${req.file.filename}` : "",
     };
 
@@ -536,6 +537,20 @@ export const updateFamilyNode = async (req, res) => {
         }
       }
     });
+
+    if(req.body.fid){
+
+      const findParent =  await FamilyTreesModel.findOne({
+        where : {
+          balkan_key : req.body.fid,
+          userId : req.Auth.id
+        }
+      })
+
+      if(findParent){
+        node.parentId = findParent.id;
+      }
+    }
 
     if (req.file) {
       node.profile = `/images/${req.file.filename}`;

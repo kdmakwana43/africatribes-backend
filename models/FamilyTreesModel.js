@@ -108,6 +108,10 @@ const FamilyTreesModel = sequelize.define(
       allowNull: false,
       defaultValue: false,
     },
+    balkan_key: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     tableName: "FamilyTrees",
