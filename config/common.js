@@ -82,6 +82,16 @@ export const generateToken = () => {
   return crypto.randomBytes(32).toString("hex");
 };
 
+export const assetFullURL = (url) => {
+  
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  return `${process.env.BASE_URL}${url}`;
+
+};
+
 export const res = (res, message, status, is_api = true) => {
   if (status !== 200) {
     if (message === "default") {

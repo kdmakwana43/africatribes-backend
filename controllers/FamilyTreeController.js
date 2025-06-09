@@ -71,7 +71,7 @@ function transformFamilyTreeData(inputData) {
     }
 
     if (member.profile) {
-      entry.photo = member.profile;
+      entry.photo = __.assetFullURL(member.profile);
     }
 
     if (parentId !== null) {

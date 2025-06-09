@@ -31,7 +31,6 @@ export const createGroup = async (req, res) => {
       role: "admin",
     });
 
-    console.log('req.body.members',req.body.members)
 
     // Add Members
     // const memberPromises = req.body.members.map(memberId => {
