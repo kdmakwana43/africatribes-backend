@@ -947,6 +947,8 @@ export const getUsersGroup = async (req, res) => {
       throw new Error(`Invalid group name. Allowed groups are: ${allowedFields.join(', ')}`);
     }
 
+    
+
     const { skip = 0, limit = 10, sort = "createdAt:DESC" } = req.body;
     const [sortField, sortOrder] = sort.split(":");
 
@@ -959,6 +961,12 @@ export const getUsersGroup = async (req, res) => {
         ]
       },
     };
+
+    if (req.body.char && req.body.char.trim() !== '') {
+      condition[req.body.group] = {
+        [Op.like]: `${req.body.char}%`
+      };
+    }
 
     const users = await Users.findAll({
       distinct: true,
