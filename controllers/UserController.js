@@ -941,6 +941,12 @@ export const getUsersGroup = async (req, res) => {
 
     if(!req.body.group) throw new Error('Please provide a group name');
 
+
+    const allowedFields = ['last_name','village', 'tribe', 'hometown', 'chief', 'alias', 'totem'];
+    if (!allowedFields.includes(req.body.group)) {
+      throw new Error(`Invalid group name. Allowed groups are: ${allowedFields.join(', ')}`);
+    }
+
     const { skip = 0, limit = 10, sort = "createdAt:DESC" } = req.body;
     const [sortField, sortOrder] = sort.split(":");
 
