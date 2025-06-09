@@ -26,6 +26,16 @@ const BannerModel = sequelize.define(
         },
       },
     },
+    url: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      validate: {
+        len: {
+          args: [0, 1000],
+          msg: "URL must be at most 1000 characters",
+        },
+      },
+    },
     status: {
       type: DataTypes.ENUM('Active', 'Deactivate'),
       allowNull: false,
