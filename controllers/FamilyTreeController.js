@@ -504,13 +504,17 @@ export const updateFamilyNode = async (req, res) => {
   try {
 
 
-    console.log('req.body',req.body)
     __.validation(["id"], req.body);
 
     const condition = {
       id  : req.body.id,
       userId : req.Auth.id
     } 
+
+    if(isNaN(Number(req.body.id))){
+      delete condition.id;
+      condition.balkan_key = req.body.id
+    }
 
 
     const node = await FamilyTreesModel.findOne({
