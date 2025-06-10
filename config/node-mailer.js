@@ -19,7 +19,7 @@ export const getOtpTemplate = (token) => `
               <p style="font-size: 15px; color: #333;">Thanks for registering. Please click the link below to verify your email address:</p>
               
               <p style="margin: 20px 0;">
-                <a  href="http://157.245.93.63:3434/reset/password/${token}" 
+                <a href="${process.env.FRONTEND_URL}/reset/password/${token}" 
                    style="font-size: 16px; color: blue; text-decoration: underline;">
                   Click here to forgot password
                 </a>

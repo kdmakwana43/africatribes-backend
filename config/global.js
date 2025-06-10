@@ -6,6 +6,6 @@ import * as __ from "../config/common.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const APP_PATH = path.join(__dirname, "..");
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = process.env.BASE_URL;
 
 export { JWT, fs, path, __dirname, APP_PATH, BASE_URL, __ };
