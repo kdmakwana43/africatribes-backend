@@ -7,7 +7,7 @@ import InvitationModel from "../models/InvitationModel.js";
 
 
 const prepareMemberData = (body,data = {}) => {
-  const allowedFields = ["surname", "dob", "dod","birthTown","profession","relationship"];
+  const allowedFields = ['first_name',"surname", "dob", "dod","birthTown","profession","relationship"];
   allowedFields.forEach((field) => {
     if (body[field]) {
       
@@ -511,15 +511,28 @@ export const updateFamilyNode = async (req, res) => {
       userId : req.Auth.id
     } 
 
+    var isBalkan = false
+
     if(isNaN(Number(req.body.id))){
       delete condition.id;
       condition.balkan_key = req.body.id
+      isBalkan = true
     }
 
+    
 
-    const node = await FamilyTreesModel.findOne({
+
+    var node = await FamilyTreesModel.findOne({
       where : condition
     });
+
+    if(isBalkan && !node){
+      const newMemberData = prepareMemberData(req.body,data)
+      if (req.file) {
+        data.profile = `/images/${req.file.filename}`;
+      }
+      node =  await FamilyTreesModel.create(newMemberData)
+    }
 
     if(!node) throw new Error('Oops! unable to find this member!')
 

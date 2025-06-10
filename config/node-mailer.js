@@ -43,18 +43,18 @@ export const getOtpTemplate = (token) => `
 export const sendEmail = async (toEmail, subject, html) => {
  
   const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
+    host: "smtp.mail.yahoo.com",
     port: 587,
     secure: false,
     auth: {
-      user: "nilesh.asservices@gmail.com",
-      pass: "wvpu zfec gpnq slzi",
+      user: "afrikatribes@yahoo.com",
+      pass: "Afrika.tribes@2025",
     },
   });
 
   try {
     const info = await transporter.sendMail({
-      from: '"Africa" <nilesh.asservices@gmail.com>',
+      from: '"Africatribes" <afrikatribes@yahoo.com>',
       to: toEmail,
       subject: subject,
       html: html,
