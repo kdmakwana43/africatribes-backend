@@ -507,16 +507,16 @@ export const updateFamilyNode = async (req, res) => {
     __.validation(["id"], req.body);
 
     const condition = {
-      id  : req.body.id,
       userId : req.Auth.id
     } 
 
     var isBalkan = false
 
     if(isNaN(Number(req.body.id))){
-      delete condition.id;
       condition.balkan_key = req.body.id
       isBalkan = true
+    } else {
+      condition.id =  req.body.id;
     }
 
     
