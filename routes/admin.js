@@ -29,6 +29,7 @@ import ContactUsPageModel from "../models/ContactUsPageModel.js";
 import GroupChatsModel from "../models/GroupChatsModel.js";
 import GroupModel from "../models/GroupModel.js";
 import PricingModel from "../models/PricingSchema.js";
+import SubscriptionModel from "../models/SubscriptionModel.js";
 
 AdminJS.registerAdapter(AdminJSMongoose);
 
@@ -162,6 +163,15 @@ const adminJs = new AdminJS({
           name: "Users",
         },
         listProperties: ["createdAt", "userId", "first_name", "relationship"],
+      },
+    },
+      {
+      resource: SubscriptionModel,
+      options: {
+        parent: {
+          name: "Users",
+        },
+        listProperties: ["createdAt", "userId","currency", "amount", "paymentStatus",'paymentMethod'],
       },
     },
 
