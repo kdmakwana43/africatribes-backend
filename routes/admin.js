@@ -28,6 +28,7 @@ import FamilyTreesModel from "../models/FamilyTreesModel.js";
 import ContactUsPageModel from "../models/ContactUsPageModel.js";
 import GroupChatsModel from "../models/GroupChatsModel.js";
 import GroupModel from "../models/GroupModel.js";
+import PricingModel from "../models/PricingSchema.js";
 
 AdminJS.registerAdapter(AdminJSMongoose);
 
@@ -439,6 +440,15 @@ const adminJs = new AdminJS({
           answer: {
             position: 2,
           },
+        },
+      },
+    },
+   
+    {
+      resource: PricingModel,
+      options: {
+        parent: {
+          name: "Settings",
         },
       },
     },

@@ -21,7 +21,7 @@ const Dashboard = () => {
     <Box variant="grey" padding="xl">
       <H2 mb="xl">Welcome to the Admin Dashboard</H2>
 
-      <Box display="flex" flexWrap="wrap" gap="lg">
+      {/* <Box display="flex" flexWrap="wrap" gap="lg">
         {data &&
           Object.entries(data).map(([key, value]) => (
             <Box
@@ -47,7 +47,7 @@ const Dashboard = () => {
               </Text>
             </Box>
           ))}
-      </Box>
+      </Box> */}
     </Box>
   );
 };

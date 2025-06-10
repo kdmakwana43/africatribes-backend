@@ -92,6 +92,9 @@ Router.post("/get/sponsors", SponsorController.getSponsors);
 // Blogs
 Router.post("/blogs", BlogController.getBlogs);
 
+// Pricing
+Router.post("/pricing/", PaymentController.getPlanPricing);
+
 
 // Pages
 Router.post("/page/about-us", PageController.getAboutUsPage);

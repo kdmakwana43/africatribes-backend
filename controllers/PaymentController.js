@@ -5,6 +5,7 @@ import SubscriptionModel from "../models/SubscriptionModel.js";
 import Users from "../models/UserModel.js";
 
 import { Paynow } from 'paynow';
+import PricingModel from "../models/PricingSchema.js";
 
 let paynow = new Paynow(process.env.PAYNOW_ID, process.env.PAYNOW_INTEGRATION_KEY);
 paynow.resultUrl = process.env.BASE_URL + "/payment/webhook";
@@ -17,9 +18,19 @@ paynow.resultUrl = process.env.BASE_URL + "/payment/webhook";
 // Initialize payment and create PaymentIntent for Payment Sheet
 export const paymentInit = async (req, res) => {
   try {
+
+    var pricing = await PricingModel.findOne({
+      order: [["createdAt", "DESC"]],
+    });
+
+    if(!pricing){
+      pricing = {
+        price : 20.00
+      }
+    }
     
     const currency = "USD";
-    const  amount = 20;
+    const  amount = parseFloat(pricing.price);
     const userId = req.Auth.id;
 
 
@@ -134,6 +145,26 @@ export const getSubscriptionStatus = async (req, res) => {
         createdAt: subscription.createdAt,
       },
     }, 200);
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};
+
+export const getPlanPricing = async (req, res) => {
+  try {
+
+    var pricing = await PricingModel.findOne({
+      order: [["createdAt", "DESC"]],
+    });
+
+
+    if(!pricing){
+      pricing = {
+        price : 20.00
+      }
+    }
+    __.res(res, pricing, 200);
+
   } catch (error) {
     __._throwError(res, error);
   }
