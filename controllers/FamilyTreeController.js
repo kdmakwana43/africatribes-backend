@@ -767,6 +767,7 @@ export const createBalkanNewNodes = async (req, res) => {
         req.body.relationship = member.relationship;
         req.body.gender = member.gender;
         const response = await createMemberNode(req);
+        console.log('response',response)
       } catch (error) {
         console.error(`Failed to create member ${member.first_name}:`, error.message);
       }

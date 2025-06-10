@@ -9,7 +9,7 @@ import TokenModal from "../models/TokenModal.js";
 
 import Users from "../models/UserModel.js";
 import JWT from "jsonwebtoken";
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 export const userRegister = async (req, res) => {
   try {
     __.validation(
@@ -947,7 +947,6 @@ export const getUsersGroup = async (req, res) => {
       throw new Error(`Invalid group name. Allowed groups are: ${allowedFields.join(', ')}`);
     }
 
-    
 
     const { skip = 0, limit = 10, sort = "createdAt:DESC" } = req.body;
     const [sortField, sortOrder] = sort.split(":");
@@ -969,14 +968,14 @@ export const getUsersGroup = async (req, res) => {
     }
 
     const users = await Users.findAll({
-      distinct: true,
-      col: req.body.group,
+      attributes: [
+        [Sequelize.col(req.body.group), req.body.group],
+        [Sequelize.fn('COUNT', Sequelize.col('*')), 'count']
+      ],
       where: condition,
-      offset: parseInt(skip),
-      limit: parseInt(limit),
-      order: [[sortField || 'createdAt', sortOrder?.toUpperCase() || 'DESC']],
-      attributes: ['id', 'first_name', 'last_name','gender','profile',req.body.group],
-    })
+      group: [req.body.group],
+      order: [[Sequelize.col(req.body.group), sortOrder?.toUpperCase() || 'DESC']],
+    });
 
     if(req.body.wantCount){
       const totalMatchCount = await Users.count({
