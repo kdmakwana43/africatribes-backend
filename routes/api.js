@@ -122,6 +122,7 @@ Router.post("/chats/group/delete", _auth, GroupChatController.deleteGroup);
 // Payments
 Router.post("/payment/init-payment-sheet", _auth, PaymentController.paymentInit);
 Router.post("/payment/verification", _auth, PaymentController.verifyPayment);
+Router.post("/payment/active-subscription", _auth, PaymentController.getSubscriptionStatus);
 
 
 // middleware

@@ -124,7 +124,8 @@ export const verifyPayment = async (req, res) => {
 // Retrieve subscription status
 export const getSubscriptionStatus = async (req, res) => {
   try {
-    const { userId } = req.params;
+    
+    const userId = req.Auth.id
 
     const subscription = await SubscriptionModel.findOne({
       where: { userId, paymentStatus: "Completed" },
@@ -135,16 +136,7 @@ export const getSubscriptionStatus = async (req, res) => {
       return __.res(res, { isSubscribed: false }, 200);
     }
 
-    __.res(res, {
-      isSubscribed: true,
-      subscription: {
-        id: subscription.id,
-        amount: subscription.amount,
-        currency: subscription.currency,
-        paymentStatus: subscription.paymentStatus,
-        createdAt: subscription.createdAt,
-      },
-    }, 200);
+    __.res(res, subscription, 200);
   } catch (error) {
     __._throwError(res, error);
   }
