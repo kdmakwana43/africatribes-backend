@@ -88,7 +88,7 @@ export const assetFullURL = (url) => {
   if (url.startsWith("http://") || url.startsWith("https://")) {
     return url;
   }
-  return `${process.env.BASE_URL}${url}`;
+  return `${process.env.BASE_URL}/backend${url}`;
 
 };
 
