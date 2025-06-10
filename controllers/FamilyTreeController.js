@@ -527,9 +527,14 @@ export const updateFamilyNode = async (req, res) => {
     });
 
     if(isBalkan && !node){
-      const newMemberData = prepareMemberData(req.body,data)
+      var newMemberData = {
+        first_name: req.body.first_name ?? 'New Member',
+        userId: req.Auth.id,
+        parentId : null
+      }
+      newMemberData = prepareMemberData(req.body,newMemberData)
       if (req.file) {
-        data.profile = `/images/${req.file.filename}`;
+        newMemberData.profile = `/images/${req.file.filename}`;
       }
       node =  await FamilyTreesModel.create(newMemberData)
     }
