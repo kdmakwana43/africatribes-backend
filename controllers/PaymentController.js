@@ -133,7 +133,7 @@ export const getSubscriptionStatus = async (req, res) => {
     });
 
     if (!subscription) {
-      return __.res(res, { isSubscribed: false }, 200);
+      return __.res(res, false, 200);
     }
 
     __.res(res, subscription, 200);
