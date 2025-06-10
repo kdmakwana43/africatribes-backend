@@ -565,4 +565,4 @@ const adminRouter = buildAuthenticatedRouter(
 
 const adminRouterX = AdminJSExpress.buildRouter(adminJs);
 
-export default adminRouterX;
+export default adminRouter;
