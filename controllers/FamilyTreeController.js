@@ -788,6 +788,7 @@ export const createBalkanNewNodes = async (req, res) => {
         req.body.parent = member.parent;
         req.body.relationship = member.relationship;
         req.body.gender = member.gender;
+        req.body.balkan_key = member.balkan_key;
         const response = await createMemberNode(req);
         console.log('response',response)
       } catch (error) {
