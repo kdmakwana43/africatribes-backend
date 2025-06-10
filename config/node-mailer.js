@@ -41,6 +41,7 @@ export const getOtpTemplate = (token) => `
 `;
 
 export const sendEmail = async (toEmail, subject, html) => {
+ 
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
