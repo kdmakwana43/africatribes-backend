@@ -28,7 +28,7 @@ export const validation = (fields, data) => {
     /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
   for (let field of fields) {
-    if (!data[field]) {
+    if (!data[field] || data[field].trim() == '') {
       throw new Error(`${field} is required`);
     }
 
