@@ -129,7 +129,7 @@ const userResourceOptions = {
 const adminJs = new AdminJS({
   componentLoader,
   branding: {
-    logo: `${BASE_URL}/assets/africatribes_logo.svg`,
+    logo: `${BASE_URL}/backend/assets/africatribes_logo.svg`,
     companyName: "Afrikatribes",
     softwareBrothers: false,
   },
@@ -472,7 +472,7 @@ const adminJs = new AdminJS({
   loginPath: "/master/login",
   logoutPath: "/master/logout",
   assets: {
-    styles: [`${BASE_URL}/assets/sidebar.css`],
+    styles: [`${BASE_URL}/backend/assets/sidebar.css`],
   },
 });
 
