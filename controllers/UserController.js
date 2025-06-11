@@ -219,7 +219,7 @@ export const userPasswordUpdate = async (req, res) => {
 export const uploadFile = async (req, res) => {
   try {
     if (req.file) {
-      __.res(res, "/backend/images/" + req.file.filename, 200);
+      __.res(res, "/images/" + req.file.filename, 200);
     } else {
       throw new Error("Oops! Failed to upload File or image.");
     }

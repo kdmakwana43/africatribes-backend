@@ -96,7 +96,7 @@ const ImageUploader = (props) => {
             borderRadius: "6px",
           }}
         >
-          <img src={previewUrl} alt="Preview" style={{ maxWidth: "100%", maxHeight: "200px", borderRadius: "6px" }} />
+          <img src={'/backend' + previewUrl} alt="Preview" style={{ maxWidth: "100%", maxHeight: "200px", borderRadius: "6px" }} />
           <Button
             variant="danger"
             size="sm"
