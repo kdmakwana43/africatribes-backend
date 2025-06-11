@@ -16,9 +16,13 @@ export const getBlogs = async (req, res) => {
     }
 
     if (req.body.search && req.body.search.trim() !== '') {
-      condition.title = {
-        [Op.like]: `%${req.body.search}%`
-      };
+      const searchTerm = req.body.search.trim();
+       condition[Op.or]= [
+          { title: { [Op.like]: `%${searchTerm}%` } },
+          { description: { [Op.like]: `%${searchTerm}%` } },
+          { author: { [Op.like]: `%${searchTerm}%` } },
+          { blog_url: { [Op.like]: `%${searchTerm}%` } },
+        ]
     }
 
     console.log('condition',condition)
