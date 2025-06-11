@@ -14,7 +14,7 @@ const ShowImage = ({ property, record, view = "list" }) => {
   };
 
   if (image && !image.startsWith('http')) {
-    // image = '/' + image;
+    image = '/backend' + image;
   }
 
   if (!image) return <div>--</div>;
