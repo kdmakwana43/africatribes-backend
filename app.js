@@ -10,7 +10,6 @@ import { APP_PATH, path } from "./config/global.js";
 import startBlogRobot from "./robots/blogs-robot.js";
 import startUserRobot from "./robots/user-robot.js";
 import setupSocket from "./sockets/socket.js";
-import session from "express-session";
 
 dotenv.config();
 
@@ -31,19 +30,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public", { maxAge: "365d" }));
 app.use(express.static(path.join(APP_PATH, "../public")));
-
-
-// 🔒 Session middleware (must be before routes that use sessions)
-app.use(session({
-  secret: process.env.SESSION_SECRET || "default-secret-key", // Replace with env value
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: false, // set true if using HTTPS
-    httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 24 // 1 day
-  }
-}));
 
 // Admin Routes
 app.use("/master", adminRouter);
