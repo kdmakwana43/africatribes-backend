@@ -77,6 +77,8 @@ Router.post("/family/members",_auth,_familyPermission,FamilyTreeController.getFa
 Router.post("/family/premium/tree",_auth,_familyPermission,FamilyTreeController.getFamilyBalkanTree);
 Router.post("/family/premium/save-tree",_auth,_familyPermission,FamilyTreeController.createBalkanNewNodes);
 
+Router.post("/family/tree/public",FamilyTreeController.getFamilyTreesPublic);
+
 
 
 // contact

@@ -447,7 +447,6 @@ export const getFamilyTrees = async (req, res) => {
       userId: req.Auth.id,
     };
 
-    console.log('req.body',req.body)
 
     if(req.body?.userId){
       
@@ -459,6 +458,39 @@ export const getFamilyTrees = async (req, res) => {
       if(!isAccepted && user.allowPublicView == false) throw new Error('This user profile is private! You can not view this family tree.')
       condition.userId = req.body?.userId
     }
+
+    // Fetch all nodes for this user
+    const flatMembers = await FamilyTreesModel.findAll({
+      where: condition,
+      order: [['id', 'ASC']],
+    });
+
+    // Build tree
+    const tree = buildFamilyTree(flatMembers);
+
+    __.res(res, tree, 200);
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};
+
+
+export const getFamilyTreesPublic = async (req, res) => {
+  try {
+
+
+    if(!req.body?.userId) throw new Error('invalid request')
+
+    const condition = {
+      userId: req.body?.userId,
+    };
+
+     const user = await Users.findByPk(req.body?.userId);
+    if(!user) throw new Error('User not found! Please check the user id and try again.')
+
+    // Check its accepted 
+    const isAccepted = await InvitationModel.isAccepted(req.body?.userId, req.Auth.id);
+    if(!isAccepted && user.allowPublicView == false) throw new Error('This user profile is private! You can not view this family tree.')
 
     // Fetch all nodes for this user
     const flatMembers = await FamilyTreesModel.findAll({
