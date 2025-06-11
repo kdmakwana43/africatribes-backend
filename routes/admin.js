@@ -521,8 +521,8 @@ const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
     secret: process.env.SESSION_SECRET || "default-secret-key",
     cookie: {
       httpOnly: true,
-      secure: process.env.COOKIE_SECURE === "true",
-      // secure: false,
+      secure: false,
+      // process.env.COOKIE_SECURE === "true"
     },
   }
 );
