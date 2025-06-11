@@ -502,32 +502,7 @@ if (process.env.MODE === "production") {
   adminJs.watch();
 }
 
-const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
-  adminJs,
-  {
-    authenticate: async ({ email, password }) => {
-      if (email === ADMIN.email && password === ADMIN.password) {
-        return { email };
-      }
-      return null;
-    },
-    cookiePassword: process.env.ADMIN_COOKIE_SECRET || "admin-cookie-secret", // 🔐 required
-    cookieName: "adminjs", // optional but recommended
-  },
-  null,
-  {
-    resave: false,
-    saveUninitialized: true,
-    secret: process.env.SESSION_SECRET || "default-secret-key",
-    cookie: {
-      httpOnly: true,
-      secure: false,
-      // process.env.COOKIE_SECURE === "true"
-    },
-  }
-);
-
-// // Build authenticated router with the provider
+// Build authenticated router with the provider
 // const adminRouter = buildAuthenticatedRouter(
 //   adminJs,
 //   {
@@ -588,6 +563,7 @@ const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
 //   }
 // );
 
-const adminRouterX = AdminJSExpress.buildRouter(adminJs);
+// const adminRouterX = AdminJSExpress.buildRouter(adminJs);
+const adminRouter = AdminJSExpress.buildRouter(adminJs);
 
 export default adminRouter;
