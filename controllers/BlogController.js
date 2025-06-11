@@ -25,7 +25,6 @@ export const getBlogs = async (req, res) => {
         ]
     }
 
-    console.log('condition',condition)
 
     const blogs = await BlogModel.findAll({
       where: condition,
