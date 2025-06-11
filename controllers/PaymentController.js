@@ -42,7 +42,7 @@ export const paymentInit = async (req, res) => {
     console.log("Creating payment for user:", paynow.returnUrl);
 
     console.log("Payment created:", payment);
-    payment.add("Premium Subscription", 20);
+    payment.add("Premium Subscription", amount);
 
     const paymentResponse = await paynow.send(payment)
     console.log("Payment response:", paymentResponse);

@@ -641,7 +641,7 @@ export const moveChildNode = async (req, res) => {
     });
 
 
-    if(!node.parentId) throw new Error(`${node} is root parent! can not move this.`)
+    if(!node.parentId) throw new Error(`${node.first_name} is root parent! can not move this.`)
 
     const targetNode = await FamilyTreesModel.findOne({
       where : {
