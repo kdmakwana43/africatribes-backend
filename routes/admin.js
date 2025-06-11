@@ -507,12 +507,12 @@ const adminRouter = buildAuthenticatedRouter(
   adminJs,
   {
     provider,
-    cookiePassword: process.env.COOKIE_SECRET,
+    cookiePassword: process.env.SESSION_SECRET,
     cookieName: "adminJs",
   },
   null,
   {
-    secret: process.env.COOKIE_SECRET,
+    secret: process.env.SESSION_SECRET,
     resave: true,
     saveUninitialized: true,
   }
