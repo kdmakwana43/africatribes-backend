@@ -74,11 +74,17 @@ function transformFamilyTreeData(inputData) {
       entry.photo = __.assetFullURL(member.profile);
     }
 
+    
+
     if (member.mid) {
       entry.mid = member.mid;
     }
 
      if (member.fid) {
+      entry.fid = member.fid;
+    }
+
+    if(parentId){
       entry.fid = member.fid;
     }
 
@@ -795,9 +801,8 @@ export const getFamilyBalkanTree = async (req, res) => {
     const familyMembers = await FamilyTreesModel.findAll({
       where: { userId: req.Auth.id },
       include: [
-        { model: FamilyTreesModel, as: 'children', attributes: ['id', 'relationship', 'dob', 'dod', 'birthTown', 'profession'] },
-        { model: FamilyTreesModel, as: 'parent', attributes: ['id', 'relationship', 'dob', 'dod', 'birthTown', 'profession'] },
-
+        { model: FamilyTreesModel, as: 'children', attributes: ['id', 'relationship', 'dob', 'dod', 'birthTown', 'profession','fid','mid','pids'] },
+        { model: FamilyTreesModel, as: 'parent', attributes: ['id', 'relationship', 'dob', 'dod', 'birthTown', 'profession','fid','mid','pids'] },
       ],
     });
 
