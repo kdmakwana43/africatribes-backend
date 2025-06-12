@@ -74,8 +74,12 @@ function transformFamilyTreeData(inputData) {
       entry.photo = __.assetFullURL(member.profile);
     }
 
-    if (parentId !== null) {
-      entry.mid = parentId;
+    if (member.mid) {
+      entry.mid = member.mid;
+    }
+
+     if (member.fid) {
+      entry.fid = member.fid;
     }
 
     if (member.spouses && member.spouses.length > 0) {
@@ -90,7 +94,7 @@ function transformFamilyTreeData(inputData) {
         const spouseEntry = {
           id: spouse.id,
           gender: 'female', // Forced to 'female' as per output requirement
-          name: `${spouse.first_name || "NR"} ${spouse.surname || ""}`.trim(),
+          name: `${spouse.first_name || ""} ${spouse.surname || ""}`.trim(),
           pids: [member.id]
         };
         if (spouse.profile) {
@@ -139,12 +143,13 @@ const createMemberNode = async (req) =>  {
       birthTown: req.body.birthTown || null,
       profession: req.body.profession || null,
       balkan_key: req.body.balkan_key || null,
+      fid: req.body.fid || null,
+      mid: req.body.mid || null,
+      pids: req.body.pids  ? JSON.stringify(req.body.pids) : null,
       profile: req.file ? `/images/${req.file.filename}` : "",
     };
 
     let createdNode = null;
-
-    console.log('req.body',req.body)
 
     const parentId = req.body.parent ? Number(req.body.parent) : null;
 
@@ -513,14 +518,20 @@ export const deleteFamilyNode = async (req, res) => {
     __.validation(["id"], req.body);
 
     const condition = {
-      id  : req.body.id,
       userId : req.Auth.id
     } 
+
+
+    if(isNaN(Number(req.body.id))){
+      condition.balkan_key = req.body.id
+    } else {
+      condition.id =  req.body.id;
+    }
     const node = await FamilyTreesModel.findOne({
       where : condition
     });
 
-    if (!node) throw new Error('This member is already deleted');
+    if (!node) throw new Error('This member is already deleted or not saved yet');
     await node.destroy(); 
     
     __.res(res, 'Member node deleted successfully!', 200);

@@ -112,6 +112,18 @@ const FamilyTreesModel = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    fid: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    mid: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    pids: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    } 
   },
   {
     tableName: "FamilyTrees",
