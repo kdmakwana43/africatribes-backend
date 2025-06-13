@@ -957,3 +957,31 @@ export const createNewFamilyNodes = async (req, res) => {
     __._throwError(res, error);
   }
 };
+
+
+export const getFamilyBalkanTreeNew = async (req, res) => {
+  try {
+   
+  const familyTrees = await FamilyTreesModel.findAll({
+        where: { userId: req.Auth.id },
+        attributes: [
+          "id",
+          "balkan_key",
+          "first_name",
+          "surname",
+          "dob",
+          "birthTown",
+          "profile",
+          "gender",
+          "pids",
+          "mid",
+          "fid",
+        ],
+      });
+
+    __.res(res, familyTrees, 200);
+  } catch (error) {
+    console.error('Error fetching family tree data:', error);
+    __._throwError(res, error);
+  }
+};
