@@ -20,18 +20,18 @@ const TreesModel = sequelize.define(
       allowNull: false,
       validate: {
         len: {
-          args: [2, 50],
-          msg: "First name must be between 2 and 50 characters long.",
+          args: [1, 50],
+          msg: "First name must be between 1 and 50 characters long.",
         },
       },
     },
     surname: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       validate: {
         len: {
-          args: [2, 50],
-          msg: "Surname must be between 2 and 50 characters long.",
+          args: [1, 50],
+          msg: "Surname must be between 1 and 50 characters long.",
         },
       },
     },

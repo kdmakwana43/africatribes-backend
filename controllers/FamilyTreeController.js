@@ -943,9 +943,9 @@ export const createNewFamilyNodes = async (req, res) => {
 
     var members = [...req.body.members]
     members.forEach( async (member) => {
-      
       var memberOject =  {...member, userId : req.Auth.id}
       const savedMember = await TreesModel.create(memberOject);
+      console.log('savedMember',savedMember)
     });
 
     __.res(
