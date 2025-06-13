@@ -16,14 +16,6 @@ export const compressPassword = (password, oldPassword) => {
 };
 
 // export const validation = (fields, data) => {
-//   for (let field of fields) {
-//     if (!data[field]) {
-//       throw new Error(`${field} is required`);
-//     }
-//   }
-// };
-
-// export const validation = (fields, data) => {
 //   const emailRegex =
 //     /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
@@ -46,6 +38,12 @@ export const compressPassword = (password, oldPassword) => {
 //     }
 //   }
 // };
+
+const _validateEmail = (email) => {
+  const re =
+    /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  return re.test(String(email).toLowerCase());
+};
 
 export const validation = (required, body, skip = []) => {
   for (let i = 0; i < required.length; i++) {
@@ -76,7 +74,7 @@ export const validation = (required, body, skip = []) => {
     if (
       field === "email" &&
       required.indexOf(field) !== -1 &&
-      !common._validateEmail(body[field].toString().trim())
+      !_validateEmail(body[field].toString().trim())
     ) {
       return {
         is_valid: false,
