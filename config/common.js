@@ -23,28 +23,69 @@ export const compressPassword = (password, oldPassword) => {
 //   }
 // };
 
-export const validation = (fields, data) => {
-  const emailRegex =
-    /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+// export const validation = (fields, data) => {
+//   const emailRegex =
+//     /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
-  for (let field of fields) {
-    
-    if (!data[field]) {
-      throw new Error(`${field} is required`);
-    }
+//   for (let field of fields) {
 
-    // Extra email validation
-    if (field === "email" && !emailRegex.test(data[field])) {
-      throw new Error(`Invalid email format`);
-    }
+//     if (!data[field]) {
+//       throw new Error(`${field} is required`);
+//     }
 
-    if (field === "password" && data[field].length < 8) {
-      throw new Error(`Password must be at least 8 characters long`);
-    }
-    if (field === "new_password" && data[field].length < 8) {
-      throw new Error(`Password must be at least 8 characters long`);
+//     // Extra email validation
+//     if (field === "email" && !emailRegex.test(data[field])) {
+//       throw new Error(`Invalid email format`);
+//     }
+
+//     if (field === "password" && data[field].length < 8) {
+//       throw new Error(`Password must be at least 8 characters long`);
+//     }
+//     if (field === "new_password" && data[field].length < 8) {
+//       throw new Error(`Password must be at least 8 characters long`);
+//     }
+//   }
+// };
+
+export const validation = (required, body, skip = []) => {
+  for (let i = 0; i < required.length; i++) {
+    if (Object.keys(body).indexOf(required[i]) === -1) {
+      return {
+        is_valid: false,
+        message: required[i] + " is required.",
+      };
     }
   }
+
+  for (let i = 0; i < Object.keys(body).length; i++) {
+    let field = Object.keys(body)[i];
+    if (body[field] == null) {
+      body[field] = "";
+    }
+    if (
+      body[field].toString().trim() === "" &&
+      field !== "image" &&
+      required.indexOf(field) !== -1
+    ) {
+      return {
+        is_valid: false,
+        message: field + " is required.",
+      };
+    }
+
+    if (
+      field === "email" &&
+      required.indexOf(field) !== -1 &&
+      !common._validateEmail(body[field].toString().trim())
+    ) {
+      return {
+        is_valid: false,
+        message: "Please enter valid email address.",
+      };
+    }
+  }
+
+  return true;
 };
 
 export const generateOTP = () => {
@@ -84,13 +125,11 @@ export const generateToken = () => {
 };
 
 export const assetFullURL = (url) => {
-  
   if (!url) return "";
   if (url.startsWith("http://") || url.startsWith("https://")) {
     return url;
   }
   return `${process.env.BASE_URL}/backend${url}`;
-
 };
 
 export const res = (res, message, status, is_api = true) => {
