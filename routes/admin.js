@@ -30,6 +30,7 @@ import GroupChatsModel from "../models/GroupChatsModel.js";
 import GroupModel from "../models/GroupModel.js";
 import PricingModel from "../models/PricingSchema.js";
 import SubscriptionModel from "../models/SubscriptionModel.js";
+import TreesModel from "../models/TreesModel.js";
 
 AdminJS.registerAdapter(AdminJSMongoose);
 
@@ -158,6 +159,15 @@ const adminJs = new AdminJS({
     },
     {
       resource: FamilyTreesModel,
+      options: {
+        parent: {
+          name: "Users",
+        },
+        listProperties: ["createdAt", "userId", "first_name", "relationship"],
+      },
+    },
+    {
+      resource: TreesModel,
       options: {
         parent: {
           name: "Users",
