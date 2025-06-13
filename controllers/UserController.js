@@ -970,7 +970,7 @@ export const getUsersGroup = async (req, res) => {
     const users = await Users.findAll({
       attributes: [
         [Sequelize.col(req.body.group), req.body.group],
-        [Sequelize.fn('COUNT', Sequelize.col('*')), 'count']
+        // [Sequelize.fn('COUNT', Sequelize.col('*')), 'count']
       ],
       where: condition,
       group: [req.body.group],

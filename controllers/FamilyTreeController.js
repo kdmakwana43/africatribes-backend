@@ -4,6 +4,7 @@ import FamilyTreesModel from "../models/FamilyTreesModel.js";
 import moment from 'moment'
 import Users from "../models/UserModel.js";
 import InvitationModel from "../models/InvitationModel.js";
+import TreesModel from "../models/TreesModel.js";
 
 
 const prepareMemberData = (body,data = {}) => {
@@ -151,7 +152,7 @@ const createMemberNode = async (req) =>  {
       balkan_key: req.body.balkan_key || null,
       fid: req.body.fid || null,
       mid: req.body.mid || null,
-      pids: req.body.pids  ? JSON.stringify(req.body.pids) : null,
+      pids: req.body.pids ? req.body.pids : null,
       profile: req.file ? `/images/${req.file.filename}` : "",
     };
 
@@ -630,6 +631,16 @@ export const updateFamilyNode = async (req, res) => {
       node.profile = ''
     }
 
+    if(req.body.pids){
+    try {
+          node.pids = JSON.stringify(req.body.pids)
+      } catch (error) {
+        
+      }
+    }
+
+    
+
     await node.save();
     __.res(res, 'Member updated successfully!', 200);
   
@@ -816,6 +827,67 @@ export const getFamilyBalkanTree = async (req, res) => {
     __._throwError(res, error);
   }
 };
+export const getFamilyBalkanTreeBalkan = async (req, res) => {
+  try {
+   
+  const familyTrees = await FamilyTreesModel.findAll({
+        where: { userId: req.Auth.id },
+        attributes: [
+          "id",
+          "balkan_key",
+          "first_name",
+          "surname",
+          "dob",
+          "birthTown",
+          "profile",
+          "gender",
+          "pids",
+          "mid",
+          "fid",
+        ],
+      });
+
+      // Transform the data to match the requested format
+
+      const formattedData = familyTrees.map((member) => {
+
+
+        const result = {
+          id: member.balkan_key || member.id.toString(), // Use balkan_key if available, else id
+          name: `${member.first_name}${member.surname ? " " + member.surname : ""}`, // Combine first_name and surname
+          gender: member.gender,
+        };
+
+        if(!member.pids || member.pids == ""){
+          const spouses = familyTrees.filter( s => s.fid == result.id)
+          result.pids = spouses.map(x => x.balkan_key)
+        } else {
+          try {
+            result.pids = JSON.parse(member.pids)
+          } catch (error) {
+            
+          }
+        }
+
+       
+
+        // Add optional fields if they exist
+        if (member.profile) result.photo = member.profile; // Map profile to photo
+        if (member.dob) result.born = member.dob; // Map dob to born
+        if (member.birthTown) result.city = member.birthTown; // Map birthTown to city
+        // if (member.pids) result.pids = JSON.parse(member.pids); // Parse pids if it’s a JSON string
+        if (member.mid) result.mid = member.mid; // Include mother ID
+        if (member.fid) result.fid = member.fid; // Include father ID
+
+        return result;
+      });
+
+    __.res(res, formattedData, 200);
+  } catch (error) {
+    console.error('Error fetching family tree data:', error);
+    __._throwError(res, error);
+  }
+};
 
 
 export const createBalkanNewNodes = async (req, res) => {
@@ -836,12 +908,44 @@ export const createBalkanNewNodes = async (req, res) => {
         req.body.relationship = member.relationship;
         req.body.gender = member.gender;
         req.body.balkan_key = member.balkan_key;
+        req.body.fid = member.fid;
+        req.body.mid = member.mid;
+        try {
+          req.body.pids = member.pdis ? JSON.stringify(member.pdis) : null;
+        } catch (error) {
+        }
         const response = await createMemberNode(req);
         console.log('response',response)
       } catch (error) {
         console.error(`Failed to create member ${member.first_name}:`, error.message);
       }
 
+    });
+
+    __.res(
+      res,
+      'Family members saved successfully!',
+      200
+    );
+  } catch (error) {
+    __._throwError(res, error);
+  }
+};
+
+
+
+export const createNewFamilyNodes = async (req, res) => {
+  try {
+
+    __.validation(["members"], req.body);
+
+    if(!Array.isArray(req.body.members) || req.body.members.length == 0) throw new Error('Please provide valid members data to create')
+
+    var members = [...req.body.members]
+    members.forEach( async (member) => {
+      
+      var memberOject =  {...member, userId : req.Auth.id}
+      const savedMember = await TreesModel.create(memberOject);
     });
 
     __.res(
