@@ -82,8 +82,8 @@ Router.post("/family/premium/save-tree",_auth,_familyPermission,FamilyTreeContro
 Router.post("/family/tree/public",FamilyTreeController.getFamilyTreesPublic);
 
 // NEW
-Router.post("/family/tree/create-member",FamilyTreeController.createNewFamilyNodes);
-Router.post("/family/trees",FamilyTreeController.getFamilyBalkanTreeNew);
+Router.post("/family/tree/create-member",_auth,FamilyTreeController.createNewFamilyNodes);
+Router.post("/family/trees",_auth,FamilyTreeController.getFamilyBalkanTreeNew);
 
 
 
