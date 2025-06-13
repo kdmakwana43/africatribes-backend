@@ -14,6 +14,7 @@ export const hasPassword = (password) => {
 export const compressPassword = (password, oldPassword) => {
   return bcrypt.compareSync(password, oldPassword);
 };
+const hh = () => {};
 
 // export const validation = (fields, data) => {
 //   const emailRegex =
