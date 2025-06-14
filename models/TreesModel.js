@@ -127,6 +127,16 @@ const TreesModel = sequelize.define(
         },
       },
     },
+    sid: {
+      type: DataTypes.STRING,
+      defaultValue: "",
+      validate: {
+        len: {
+          args: [0, 100],
+          msg: "SID can have up to 100 characters.",
+        },
+      },
+    },
     pids: {
       type: DataTypes.TEXT,
       allowNull: true,

@@ -157,15 +157,15 @@ const adminJs = new AdminJS({
         listProperties: ["createdAt", "userId", "requestedTo", "status"],
       },
     },
-    {
-      resource: FamilyTreesModel,
-      options: {
-        parent: {
-          name: "Users",
-        },
-        listProperties: ["createdAt", "userId", "first_name", "relationship"],
-      },
-    },
+    // {
+    //   resource: FamilyTreesModel,
+    //   options: {
+    //     parent: {
+    //       name: "Users",
+    //     },
+    //     listProperties: ["createdAt", "userId", "first_name", "relationship"],
+    //   },
+    // },
     {
       resource: TreesModel,
       options: {

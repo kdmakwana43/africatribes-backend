@@ -47,7 +47,7 @@ const SubscriptionModel = sequelize.define(
     verificationToken: {
       type: DataTypes.STRING,
       allowNull: true,
-      unique: true,
+      // unique: true,
       validate: {
         notEmpty: {
           msg: "Verification token cannot be empty if provided",
@@ -57,7 +57,7 @@ const SubscriptionModel = sequelize.define(
     paymentUrl: {
       type: DataTypes.STRING,
       allowNull: true,
-      unique: true,
+      // unique: true,
       validate: {
         notEmpty: {
           msg: "Payment URL cannot be empty if provided",
@@ -67,7 +67,7 @@ const SubscriptionModel = sequelize.define(
     pollUrl: {
       type: DataTypes.STRING,
       allowNull: true,
-      unique: true,
+      // unique: true,
       validate: {
         notEmpty: {
           msg: "Poll URL cannot be empty if provided",
