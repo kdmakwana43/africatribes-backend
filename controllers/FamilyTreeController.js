@@ -8,7 +8,7 @@ import TreesModel from "../models/TreesModel.js";
 
 
 const prepareMemberData = (body,data = {}) => {
-  const allowedFields = ['first_name',"surname", "dob", "dod","birthTown","profession","relationship"];
+  const allowedFields = ['first_name',"surname", "dob", "dod","birthTown","profession","relationship","fid","mid","pids"];
   allowedFields.forEach((field) => {
     if (body[field]) {
       
@@ -128,42 +128,37 @@ function transformFamilyTreeData(inputData) {
 }
 
 
-const createMemberNode = async (req) =>  {
-   try {
+const createMemberNode = async (req) => {
+  try {
     // Validate required fields
     if (!req.body.first_name) {
       throw new Error("First name is required.");
     }
-    if (!req.body.relationship) {
-      throw new Error("Relationship is required.");
-    }
-
+   
     // Base data for the new node
     const data = {
       first_name: req.body.first_name,
       userId: req.Auth.id,
-      relationship: req.body.relationship,
+      relationship: req.body.relationship || '',
       gender: req.body.gender,
       surname: req.body.surname || null,
       dob: req.body.dob || null,
       dod: req.body.dod || null,
       birthTown: req.body.birthTown || null,
       profession: req.body.profession || null,
-      balkan_key: req.body.balkan_key || null,
-      fid: req.body.fid || null,
-      mid: req.body.mid || null,
-      pids: req.body.pids ? req.body.pids : null,
-      profile: req.file ? `/images/${req.file.filename}` : "",
+      balkan_key: req.body.balkan_key || __.generateToken(6),
+      pids: [],
+      profile: req.file ? `/images/${req.file.filename}` : (req.body.photo || ""),
     };
 
-    let createdNode = null;
 
+    let createdNode = null;
     const parentId = req.body.parent ? Number(req.body.parent) : null;
 
     // Fetch the current member if parentId is provided
     let currentMember = null;
     if (parentId) {
-      currentMember = await FamilyTreesModel.findOne({
+      currentMember = await TreesModel.findOne({
         where: { id: parentId, userId: req.Auth.id },
       });
       if (!currentMember) {
@@ -171,149 +166,37 @@ const createMemberNode = async (req) =>  {
       }
     }
 
-    // Fetch the parent's parent if needed
-    let currentMemberParent = null;
-    if (currentMember && currentMember.parentId) {
-      currentMemberParent = await FamilyTreesModel.findOne({
-        where: { id: currentMember.parentId, userId: req.Auth.id },
-      });
-    }
+    if (currentMember) {
 
-    switch (req.body.relationship) {
-      case "Spouse":
+   
 
-        if (!parentId) {
-          throw new Error("Parent ID is required to add a spouse.");
-        }
-        // Spouse shares the same parentId as the partner
-        data.parentId = parentId;
-        createdNode = await FamilyTreesModel.create(data);
-        if (!createdNode) {
-          throw new Error("Failed to create spouse. Please try again.");
-        }
-        break;
+      if (req.body.relationship === 'Spouse') {
+        // Create the new node
+        createdNode = await TreesModel.create(data);
 
-      case "Uncle":
-        if (!parentId) {
-          throw new Error("Parent ID is required to add an uncle.");
-        }
-        if (!currentMemberParent) {
-          throw new Error(
-            `Member ${currentMember.first_name} does not have a father node. Please add father first.`
-          );
-        }
-        if (!currentMemberParent.parentId) {
-          throw new Error(
-            `Member ${currentMember.first_name} does not have a grandfather node. Please add grandfather first.`
-          );
-        }
-        // Uncle shares the grandfather as parent
-        data.parentId = currentMemberParent.parentId;
-        createdNode = await FamilyTreesModel.create(data);
-        if (!createdNode) {
-          throw new Error("Failed to create uncle. Please try again.");
-        }
-        break;
-
-      case "Grand Father":
-        if (!parentId) {
-          throw new Error("Parent ID is required to add a grandfather.");
-        }
-        if (!currentMemberParent) {
-          throw new Error(
-            `Member ${currentMember.first_name} does not have a father node. Please add father first.`
-          );
-        }
-        if (currentMemberParent.parentId) {
-          throw new Error(
-            `Member ${currentMember.first_name} already has a grandfather.`
-          );
-        }
-        // Grandfather has no parentId
-        data.parentId = null;
-        createdNode = await FamilyTreesModel.create(data);
-        if (!createdNode) {
-          throw new Error("Failed to create grandfather. Please try again.");
-        }
-        // Update the father's parentId to the new grandfather
-        currentMemberParent.parentId = createdNode.id;
-        await currentMemberParent.save();
-        break;
-
-      case "Father":
-        if (!parentId) {
-          throw new Error("Parent ID is required to add a father.");
-        }
-        // Father inherits the grandfather's parentId
-        data.parentId = currentMemberParent ? currentMemberParent.parentId : null;
-        createdNode = await FamilyTreesModel.create(data);
-        if (!createdNode) {
-          throw new Error("Failed to create father. Please try again.");
-        }
-        // Update the current member's parentId to the new father
-        currentMember.parentId = createdNode.id;
+        const currentPids = currentMember.pids || [];
+        currentPids.push(createdNode.balkan_key);
+        currentMember.pids = currentPids;
         await currentMember.save();
-        break;
+        console.log("Updated currentMember pids:", currentMember.pids);
+       
+      } else {
+        data.fid = currentMember.balkan_key;
+        createdNode = await TreesModel.create(data);
+      }
 
-      case "Sister":
-      case "Brother":
-      case "Cousin Sister":
-      case "Cousin Brother":
-      case "Niece":
-      case "Nephew":
-      case "Mother In Law":
-      case "Father In Law":
-      case "Brother In Law":
-      case "Sister In Law":
-        // Siblings and in-laws share the same parentId as the current member
-        data.parentId = currentMember ? currentMember.parentId : parentId;
-        createdNode = await FamilyTreesModel.create(data);
-        if (!createdNode) {
-          throw new Error(
-            `Failed to create ${req.body.relationship}. Please try again.`
-          );
-        }
-        break;
-
-      case "Myself":
-        // "Myself" should only be added once per user
-        const existingMyself = await FamilyTreesModel.findOne({
-          where: { userId: req.Auth.id, relationship: "Myself" },
-        });
-        if (existingMyself) {
-          throw new Error("A 'Myself' node already exists for this user.");
-        }
-        data.isOwner = true;
-        data.parentId = parentId;
-        createdNode = await FamilyTreesModel.create(data);
-        if (!createdNode) {
-          throw new Error("Failed to create 'Myself' node. Please try again.");
-        }
-        break;
-
-      case "Son":
-      case "Daughter":
-      case "Grand Son":
-      case "Grand Daughter":
-        // Children use the provided parentId
-        data.parentId = parentId;
-        createdNode = await FamilyTreesModel.create(data);
-        if (!createdNode) {
-          throw new Error(
-            `Failed to create ${req.body.relationship}. Please try again.`
-          );
-        }
-        break;
-
-      default:
-        throw new Error("Invalid relationship type.");
+      console.log("currentMember after save:", currentMember.toJSON());
+    } else {
+      // Root User: Create a root node
+      createdNode = await TreesModel.create(data);
     }
 
-    return createdNode
+    return createdNode;
   } catch (error) {
-   throw new Error(`Failed to create member node: ${error.message}`);
+    console.error("Error in createMemberNode:", error.stack);
+    throw new Error(`Failed to create member node: ${error.message}`);
   }
-}
+};
 
 function transformFamilyTreeKitkat(data) {
   /// Map to store new IDs (original ID -> new ID)
@@ -442,9 +325,8 @@ export const addFamilyNode = async (req, res) => {
 
   try {
 
-    console.log('req',req.body)
     
-    // const response = await createMemberNode(req);
+    const response = await createMemberNode(req);
     if(!response) throw new Error('Failed to create this member! Please try again')
     __.res(res, response, 200);
 
@@ -512,7 +394,7 @@ export const getFamilyTrees = async (req, res) => {
     const buildMemberTree = (member, allMembers, seenIds = new Set()) => {
       const memberData = member.get({ plain: true });
 
-      // Avoid infinite recursion by tracking processed members
+      // Avoid infinite recursion
       if (seenIds.has(memberData.id)) {
         return null;
       }
@@ -524,7 +406,7 @@ export const getFamilyTrees = async (req, res) => {
         .map(child => buildMemberTree(child, allMembers, new Set(seenIds)))
         .filter(child => child !== null);
 
-      // Find spouses from pids (array of partner balkan_keys)
+      // Find spouses from pids
       const spouses = allMembers
         .filter(m => memberData.pids && memberData.pids.includes(m.balkan_key))
         .map(spouse => buildMemberTree(spouse, allMembers, new Set(seenIds)))
@@ -538,19 +420,15 @@ export const getFamilyTrees = async (req, res) => {
       };
     };
 
-    // Transform data to include children and spouses recursively
-    const formattedMembers = members.map(member => buildMemberTree(member, members));
-    console.log('Formatted members:', formattedMembers.length); // Log formatted members
+    // Transform data to include only top-level members (no parents)
+    const formattedMembers = members
+      .filter(member => !member.fid && !member.mid)
+      .map(member => buildMemberTree(member, members));
+    console.log('Formatted members:', formattedMembers.length, 'IDs:', formattedMembers.map(m => m.id)); // Log formatted members
 
-    // Filter out members who are already in spouses or children lists, prioritizing isOwner
+    // Filter out duplicates by checking nested relationships
     const seenIds = new Set();
     const uniqueMembers = formattedMembers.filter(member => {
-      // Prioritize keeping members with isOwner: true
-      if (member.isOwner) {
-        seenIds.add(member.id);
-        return true;
-      }
-
       // Check if member is already in another member's spouses or children
       const isInSpousesOrChildren = formattedMembers.some(otherMember => {
         if (otherMember.id === member.id) return false; // Exclude self
@@ -565,14 +443,14 @@ export const getFamilyTrees = async (req, res) => {
         return checkNested(otherMember);
       });
 
-      // Only include if not already in spouses/children and not seen
       if (!isInSpousesOrChildren && !seenIds.has(member.id)) {
         seenIds.add(member.id);
         return true;
       }
+      console.log(`Excluding member ID ${member.id} as it is nested or already seen`);
       return false;
     });
-    console.log('Unique members:', uniqueMembers.length); // Log final unique members
+    console.log('Unique members:', uniqueMembers.length, 'IDs:', uniqueMembers.map(m => m.id)); // Log final unique members
 
     __.res(res, uniqueMembers, 200);
   } catch (error) {
@@ -622,18 +500,33 @@ export const deleteFamilyNode = async (req, res) => {
       userId : req.Auth.id
     } 
 
-
     if(isNaN(Number(req.body.id))){
       condition.balkan_key = req.body.id
     } else {
       condition.id =  req.body.id;
     }
-    const node = await FamilyTreesModel.findOne({
+    const node = await TreesModel.findOne({
       where : condition
     });
 
     if (!node) throw new Error('This member is already deleted or not saved yet');
     await node.destroy(); 
+
+    // Remove From Parent
+    const parentUser = await TreesModel.findOne({
+      where : { userId : req.Auth.id, id:node.fid}
+    });
+
+    if(parentUser){
+      const currentPids = parentUser.pids || [];
+      const removedMemberId = currentPids.indexOf(node.balkan_key)
+      if(removedMemberId != -1){
+        currentPids.splice(removedMemberId,1);
+        currentMember.pids = currentPids;
+        await currentMember.save();
+      }
+     
+    }
     
     __.res(res, 'Member node deleted successfully!', 200);
 
@@ -662,25 +555,10 @@ export const updateFamilyNode = async (req, res) => {
       condition.id =  req.body.id;
     }
 
-    
 
-
-    var node = await FamilyTreesModel.findOne({
+    var node = await TreesModel.findOne({
       where : condition
     });
-
-    if(isBalkan && !node){
-      var newMemberData = {
-        first_name: req.body.first_name ?? 'New Member',
-        userId: req.Auth.id,
-        parentId : null
-      }
-      newMemberData = prepareMemberData(req.body,newMemberData)
-      if (req.file) {
-        newMemberData.profile = `/images/${req.file.filename}`;
-      }
-      node =  await FamilyTreesModel.create(newMemberData)
-    }
 
     if(!node) throw new Error('Oops! unable to find this member!')
 
@@ -703,19 +581,6 @@ export const updateFamilyNode = async (req, res) => {
       }
     });
 
-    if(req.body.fid){
-
-      const findParent =  await FamilyTreesModel.findOne({
-        where : {
-          balkan_key : req.body.fid,
-          userId : req.Auth.id
-        }
-      })
-
-      if(findParent){
-        node.parentId = findParent.id;
-      }
-    }
 
     if (req.file) {
       node.profile = `/images/${req.file.filename}`;
@@ -724,15 +589,6 @@ export const updateFamilyNode = async (req, res) => {
     if(req.body.profile == 'null'){
       node.profile = ''
     }
-
-    if(req.body.pids){
-    try {
-          node.pids = JSON.stringify(req.body.pids)
-      } catch (error) {
-        
-      }
-    }
-
     
 
     await node.save();
@@ -789,47 +645,43 @@ export const createParentNode = async (req, res) => {
   try {
 
 
-    __.validation(["first_name"], req.body);
-
-
-     const conditionRoot = { 
+    __.validation(["first_name","gender"], req.body);
+    
+    const currentUser = { 
       userId : req.Auth.id,
-      parentId : null,
     }
+
+    if(req.body.parentId){
+      currentUser.id = req.body.parentId
+    } else {
+      // currentUser.fid = null
+    }
+
+    const currentMember =  await TreesModel.findOne({where : currentUser})
+    console.log('currentMember',currentMember)
+
+    if(!currentMember) throw new Error('the current member is not available, please refresh page and try again')
+    if(currentMember.fid && currentMember.fid != '') throw new Error('This member already have parent')      
 
 
     var data = {
       first_name: req.body.first_name,
+      gender: req.body.gender,
       userId: req.Auth.id,
-      parentId : null
+      balkan_key : __.generateToken(6)
     };
-
     
     data = prepareMemberData(req.body,data)
     if (req.file) {
       data.profile = `/images/${req.file.filename}`;
     }
 
-
-    const rootParent =  await FamilyTreesModel.findOne({where : conditionRoot,order: [['id', 'ASC']]})
-    if(!rootParent){
-      const root = await FamilyTreesModel.create(data);
-        __.res(
-        res,
-        root.toJSON(),
-        200
-      );
-      return false
-    }
-    // if(!rootParent) throw new Error('There are no any node available')
-
-    const createdNode = await FamilyTreesModel.create(data);
+    const createdNode = await TreesModel.create(data);
     if(!createdNode) throw new Error('Oops! Failed to create this member! Please try again')
 
     // Update current user parent
-    rootParent.parentId = createdNode.id
-    await rootParent.save()
-
+    currentMember.fid = createdNode.balkan_key
+    await currentMember.save()
     __.res(
       res,
       createdNode.toJSON(),
@@ -845,7 +697,7 @@ export const createParentNode = async (req, res) => {
 export const createSibling = async (req, res) => {
   try {
 
-    __.validation(["first_name",'id'], req.body);
+    __.validation(["first_name",'id','gender'], req.body);
 
 
      const conditionRoot = { 
@@ -853,14 +705,14 @@ export const createSibling = async (req, res) => {
       id : req.body.id
     }
 
-    const currentMember =  await FamilyTreesModel.findOne({where : conditionRoot})
+    const currentMember =  await TreesModel.findOne({where : conditionRoot})
     if(!currentMember) throw new Error('Oops! Selected member not found')
-
  
     var data = {
       first_name: req.body.first_name,
+      gender: req.body.gender,
       userId: req.Auth.id,
-      parentId : currentMember.parentId
+      fid : currentMember.fid
     };
 
     data = prepareMemberData(req.body,data)
@@ -868,7 +720,7 @@ export const createSibling = async (req, res) => {
       data.profile = `/images/${req.file.filename}`;
     }
 
-    const createdNode = await FamilyTreesModel.create(data);
+    const createdNode = await TreesModel.create(data);
     if(!createdNode) throw new Error('Oops! Failed to create this member! Please try again')
 
     __.res(
