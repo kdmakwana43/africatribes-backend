@@ -51,7 +51,7 @@ export const userRegister = async (req, res) => {
       hometown: req.body.hometown || null,
       tribe: req.body.tribe || null,
       village: req.body.village || null,
-      isPremium : true,
+      // isPremium : true,
     };
 
     const user = await Users.create(payload);
