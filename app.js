@@ -5,7 +5,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { ConnectDb } from "./config/db-connect.js";
 import Router from "./routes/api.js";
-import adminRouter from "./routes/admin.js";
+// import adminRouter from "./routes/admin.js";
 import { APP_PATH, path } from "./config/global.js";
 import startBlogRobot from "./robots/blogs-robot.js";
 import startUserRobot from "./robots/user-robot.js";
@@ -32,7 +32,7 @@ app.use(express.static("public", { maxAge: "365d" }));
 app.use(express.static(path.join(APP_PATH, "../public")));
 
 // Admin Routes
-app.use("/master", adminRouter);
+// app.use("/master", adminRouter);
 
 // API Routes
 app.use(express.urlencoded({ extended: true }));

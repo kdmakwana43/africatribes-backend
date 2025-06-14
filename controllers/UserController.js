@@ -6,6 +6,7 @@ import FamilyTreesModel from "../models/FamilyTreesModel.js";
 import InvitationModel from "../models/InvitationModel.js";
 import NewsletterModel from "../models/NewsletterModel.js";
 import TokenModal from "../models/TokenModal.js";
+import TreesModel from "../models/TreesModel.js";
 
 import Users from "../models/UserModel.js";
 import JWT from "jsonwebtoken";
@@ -50,6 +51,7 @@ export const userRegister = async (req, res) => {
       hometown: req.body.hometown || null,
       tribe: req.body.tribe || null,
       village: req.body.village || null,
+      isPremium : true,
     };
 
     const user = await Users.create(payload);
@@ -65,9 +67,11 @@ export const userRegister = async (req, res) => {
         birthTown : user.hometown,
         relationship : 'Myself',
         isOwner : true,
-        gender : user.gender
+        gender : user.gender,
+        balkan_key : __.generateToken(6)
+
       }
-      await FamilyTreesModel.create(member);
+      await TreesModel.create(member);
       console.log('Member created')
 
     } catch (error) {

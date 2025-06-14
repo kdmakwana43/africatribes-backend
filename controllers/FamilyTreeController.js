@@ -441,8 +441,10 @@ function transformFamilyTreeKitkat(data) {
 export const addFamilyNode = async (req, res) => {
 
   try {
+
+    console.log('req',req.body)
     
-    const response = await createMemberNode(req);
+    // const response = await createMemberNode(req);
     if(!response) throw new Error('Failed to create this member! Please try again')
     __.res(res, response, 200);
 
@@ -455,37 +457,129 @@ export const addFamilyNode = async (req, res) => {
 
 export const getFamilyTrees = async (req, res) => {
   try {
+    console.log('Request Auth:', req.Auth); // Log authentication data
+    console.log('Request Body:', req.body); // Log request body
+
     const condition = {
       userId: req.Auth.id,
     };
+    console.log('Initial condition:', condition); // Log initial condition
 
-
-    if(req.body?.userId){
-      
+    if (req.body?.userId) {
+      console.log('Checking userId:', req.body.userId);
       const user = await Users.findByPk(req.body?.userId);
-      if(!user) throw new Error('User not found! Please check the user id and try again.')
+      if (!user) {
+        console.log('User not found for userId:', req.body.userId);
+        throw new Error('User not found! Please check the user id and try again.');
+      }
 
-      // Check its accepted 
-     const isAccepted = await InvitationModel.isAccepted(req.body?.userId, req.Auth.id);
-      if(!isAccepted && user.allowPublicView == false) throw new Error('This user profile is private! You can not view this family tree.')
-      condition.userId = req.body?.userId
+      // Check if it's accepted
+      const isAccepted = await InvitationModel.isAccepted(req.body?.userId, req.Auth.id);
+      console.log('isAccepted:', isAccepted, 'allowPublicView:', user.allowPublicView);
+      if (!isAccepted && user.allowPublicView === false) {
+        throw new Error('This user profile is private! You can not view this family tree.');
+      }
+      condition.userId = req.body?.userId;
+      console.log('Updated condition:', condition); // Log updated condition
     }
 
-    // Fetch all nodes for this user
-    const flatMembers = await FamilyTreesModel.findAll({
+    const members = await TreesModel.findAll({
       where: condition,
-      order: [['id', 'ASC']],
+      attributes: [
+        'id',
+        'first_name',
+        'userId',
+        'surname',
+        'dob',
+        'dod',
+        'birthTown',
+        'profession',
+        'profile',
+        'gender',
+        'relationship',
+        'isOwner',
+        'balkan_key',
+        'fid',
+        'mid',
+        'pids',
+        'createdAt',
+        'updatedAt',
+      ],
     });
+    console.log('Found members:', members.length, 'records'); // Log number of members found
 
-    // Build tree
-    const tree = buildFamilyTree(flatMembers);
+    // Helper function to build recursive member tree
+    const buildMemberTree = (member, allMembers, seenIds = new Set()) => {
+      const memberData = member.get({ plain: true });
 
-    __.res(res, tree, 200);
+      // Avoid infinite recursion by tracking processed members
+      if (seenIds.has(memberData.id)) {
+        return null;
+      }
+      seenIds.add(memberData.id);
+
+      // Find children where fid or mid matches this member's balkan_key
+      const children = allMembers
+        .filter(m => m.fid === memberData.balkan_key || m.mid === memberData.balkan_key)
+        .map(child => buildMemberTree(child, allMembers, new Set(seenIds)))
+        .filter(child => child !== null);
+
+      // Find spouses from pids (array of partner balkan_keys)
+      const spouses = allMembers
+        .filter(m => memberData.pids && memberData.pids.includes(m.balkan_key))
+        .map(spouse => buildMemberTree(spouse, allMembers, new Set(seenIds)))
+        .filter(spouse => spouse !== null);
+
+      return {
+        ...memberData,
+        parentId: null,
+        spouses: spouses || [],
+        children: children || [],
+      };
+    };
+
+    // Transform data to include children and spouses recursively
+    const formattedMembers = members.map(member => buildMemberTree(member, members));
+    console.log('Formatted members:', formattedMembers.length); // Log formatted members
+
+    // Filter out members who are already in spouses or children lists, prioritizing isOwner
+    const seenIds = new Set();
+    const uniqueMembers = formattedMembers.filter(member => {
+      // Prioritize keeping members with isOwner: true
+      if (member.isOwner) {
+        seenIds.add(member.id);
+        return true;
+      }
+
+      // Check if member is already in another member's spouses or children
+      const isInSpousesOrChildren = formattedMembers.some(otherMember => {
+        if (otherMember.id === member.id) return false; // Exclude self
+        const checkNested = (node) => {
+          if (!node) return false;
+          if (node.id === member.id) return true;
+          return (
+            node.spouses.some(checkNested) ||
+            node.children.some(checkNested)
+          );
+        };
+        return checkNested(otherMember);
+      });
+
+      // Only include if not already in spouses/children and not seen
+      if (!isInSpousesOrChildren && !seenIds.has(member.id)) {
+        seenIds.add(member.id);
+        return true;
+      }
+      return false;
+    });
+    console.log('Unique members:', uniqueMembers.length); // Log final unique members
+
+    __.res(res, uniqueMembers, 200);
   } catch (error) {
+    console.error('Error in getFamilyTrees:', error.message); // Log error
     __._throwError(res, error);
   }
 };
-
 
 export const getFamilyTreesPublic = async (req, res) => {
   try {
@@ -936,23 +1030,83 @@ export const createBalkanNewNodes = async (req, res) => {
 
 export const createNewFamilyNodes = async (req, res) => {
   try {
-
     __.validation(["members"], req.body);
 
-    if(!Array.isArray(req.body.members) || req.body.members.length == 0) throw new Error('Please provide valid members data to create')
+    if (!Array.isArray(req.body.members) || req.body.members.length == 0)
+      throw new Error("Please provide valid members data to create");
 
-    var members = [...req.body.members]
-    members.forEach( async (member) => {
-      var memberOject =  {...member, userId : req.Auth.id}
-      const savedMember = await TreesModel.create(memberOject);
-      console.log('savedMember',savedMember)
-    });
+    var members = [...req.body.members];
 
-    __.res(
-      res,
-      'Family members saved successfully!',
-      200
+    await Promise.all(
+      members.map(async (member) => {
+        const memberObject = { ...member, userId: req.Auth.id };
+        delete memberObject.id;
+        memberObject.userId = req.Auth.id;
+        delete memberObject.createdAt;
+        delete memberObject.updatedAt;
+        delete memberObject.isOwner;
+
+        if(!memberObject.balkan_key){
+          memberObject.balkan_key = member.id
+        }
+        
+        if(!memberObject.first_name){
+          memberObject.first_name = 'New Member'
+        }
+
+        if(memberObject.name && memberObject.name != ''){
+          const fullNameSplit = memberObject.name.split(' ')
+          memberObject.first_name = fullNameSplit[0]
+          if(fullNameSplit[1]){
+            memberObject.surname = fullNameSplit[1]
+          }
+        }
+
+         if(memberObject.pids && typeof memberObject.pids == 'string' && (memberObject.pids.match(',') || memberObject.pids !== '')){
+         try {
+           memberObject.pids =  memberObject.pids.split(',')
+         } catch (error) {
+            console.log('Error',error)
+         }
+        }
+
+        if(memberObject.photo && !memberObject.photo.match('/assets/images/')){
+          memberObject.profile = memberObject.photo.replace('/backend','')
+        }
+
+        if(memberObject.ImgUrl){
+          memberObject.profile = memberObject.ImgUrl
+        }
+
+         if(memberObject.dob && memberObject.dob != ''){
+          memberObject.dob =moment(memberObject.dob).format('YYYY-MM-DD') 
+         } else {
+          memberObject.dob = null
+         }
+
+         if(memberObject.dod && memberObject.dod != ''){
+          memberObject.dod = moment(memberObject.dod).format('YYYY-MM-DD') 
+         } else {
+          memberObject.dod = null
+         }
+
+        console.log('memberObject',memberObject)
+        const existingMember = await TreesModel.findOne({
+          where: {
+            userId: req.Auth.id,
+            balkan_key: memberObject.balkan_key
+          }
+        });
+
+        if (existingMember) {
+          await existingMember.update(memberObject);
+        } else {
+          await TreesModel.create(memberObject);
+        }
+      })
     );
+
+    __.res(res, "Family members saved successfully!", 200);
   } catch (error) {
     __._throwError(res, error);
   }
@@ -962,7 +1116,7 @@ export const createNewFamilyNodes = async (req, res) => {
 export const getFamilyBalkanTreeNew = async (req, res) => {
   try {
    
-  const familyTrees = await FamilyTreesModel.findAll({
+  const familyTrees = await TreesModel.findAll({
         where: { userId: req.Auth.id },
         attributes: [
           "id",
@@ -976,12 +1130,44 @@ export const getFamilyBalkanTreeNew = async (req, res) => {
           "pids",
           "mid",
           "fid",
+          "userId"
         ],
       });
+
+    // console.log('familyTrees',familyTrees)
 
     __.res(res, familyTrees, 200);
   } catch (error) {
     console.error('Error fetching family tree data:', error);
+    __._throwError(res, error);
+  }
+};
+
+
+export const deleteTreeNode = async (req, res) => {
+  try {
+
+    __.validation(["id"], req.body);
+
+    const condition = {
+      userId : req.Auth.id
+    } 
+
+    if(isNaN(Number(req.body.id))){
+      condition.balkan_key = req.body.id
+    } else {
+      condition.id =  req.body.id;
+    }
+    const node = await TreesModel.findOne({
+      where : condition
+    });
+
+    if (!node) throw new Error('This member is already deleted or not saved yet');
+    await node.destroy(); 
+    
+    __.res(res, 'Member node deleted successfully!', 200);
+
+  } catch (error) {
     __._throwError(res, error);
   }
 };

@@ -16,13 +16,13 @@ const sequelize = new Sequelize(
 // Create tables
 const syncDatabase = async () => {
   try {
-    await sequelize.sync({ alter: true });
+    await sequelize.sync({ alter: false });
     console.log("All models were synchronized successfully.");
   } catch (err) {
     console.error("Error syncing models:", err);
   }
 };
 
-syncDatabase();
+// syncDatabase();
 
 export default sequelize;

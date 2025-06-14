@@ -84,6 +84,7 @@ Router.post("/family/tree/public",FamilyTreeController.getFamilyTreesPublic);
 // NEW
 Router.post("/family/tree/create-member",_auth,FamilyTreeController.createNewFamilyNodes);
 Router.post("/family/trees",_auth,FamilyTreeController.getFamilyBalkanTreeNew);
+Router.post("/family/node/delete",_auth,FamilyTreeController.deleteTreeNode);
 
 
 

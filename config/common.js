@@ -119,8 +119,8 @@ export const authResponse = (user, token = false) => {
   return response;
 };
 
-export const generateToken = () => {
-  return crypto.randomBytes(32).toString("hex");
+export const generateToken = (length = 32) => {
+  return crypto.randomBytes(length).toString("hex");
 };
 
 export const assetFullURL = (url) => {
