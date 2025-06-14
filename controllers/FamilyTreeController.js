@@ -137,111 +137,98 @@ function transformFamilyTreeData(inputData) {
 }
 
 const finalTreeVieBuilder = (members) => {
+  // Global set to track all processed member IDs
+  const globalSeenIds = new Set();
 
-    // Helper function to build recursive member tree
-    const buildMemberTree = (member, allMembers, seenIds = new Set()) => {
-      const memberData = member.get({ plain: true });
+  // Helper function to build recursive member tree
+  const buildMemberTree = (member, allMembers, processedSpouses = new Set()) => {
+    const memberData = member.get ? member.get({ plain: true }) : member;
 
-      // Warn about empty balkan_key
-      if (!memberData.balkan_key) {
-        console.log(`Warning: Member ID ${memberData.id} has empty balkan_key`);
-      }
+    // Warn about empty balkan_key
+    if (!memberData.balkan_key) {
+      console.log(`Warning: Member ID ${memberData.id} has empty balkan_key`);
+      return null;
+    }
 
-      // Avoid infinite recursion
-      if (seenIds.has(memberData.id)) {
-        console.log(`Skipping member ID ${memberData.id} due to recursion`);
-        return null;
-      }
-      seenIds.add(memberData.id);
+    // Avoid processing already seen members
+    if (globalSeenIds.has(memberData.id)) {
+      console.log(`Skipping member ID ${memberData.id} due to global recursion`);
+      return null;
+    }
+    globalSeenIds.add(memberData.id);
 
-      // Find children where fid or mid matches this member's balkan_key (non-empty)
-      const children = allMembers
-        .filter((m) => {
-          const isChild =
-            (m.fid && m.fid === memberData.balkan_key) ||
-            (m.mid && m.mid === memberData.balkan_key);
-          if (isChild)
-            console.log(
-              `Found child ID ${m.id} for parent ID ${memberData.id}`
-            );
-          return isChild;
-        })
-        .map((child) => buildMemberTree(child, allMembers, new Set(seenIds)))
-        .filter((child) => child !== null);
-
-      // Find spouses from pids
-      const spouses = allMembers
-        .filter(
-          (m) => memberData.pids && memberData.pids.includes(m.balkan_key)
-        )
-        .map((spouse) => buildMemberTree(spouse, allMembers, new Set(seenIds)))
-        .filter((spouse) => spouse !== null);
-
-      return {
-        ...memberData,
-        parentId: null,
-        spouses: spouses || [],
-        children: children || [],
-      };
-    };
-
-    // Select all top-level members (no parents)
-    let formattedMembers = members
-      .filter((member) => !member.fid && !member.mid)
-      .sort((a, b) => {
-        // Sort by isOwner: true, then createdAt
-        if (a.isOwner && !b.isOwner) return -1;
-        if (!a.isOwner && b.isOwner) return 1;
-        return new Date(a.createdAt) - new Date(b.createdAt);
+    // Find children where fid or mid matches this member's balkan_key
+    const children = allMembers
+      .filter((m) => {
+        const isChild =
+          (m.fid && m.fid === memberData.balkan_key) ||
+          (m.mid && m.mid === memberData.balkan_key && !allMembers.find((cm) => cm.balkan_key === m.fid)?.pids?.includes(memberData.balkan_key));
+        if (isChild)
+          console.log(`Found child ID ${m.id} for parent ID ${memberData.id}`);
+        return isChild;
       })
+      .map((child) => buildMemberTree(child, allMembers, processedSpouses))
+      .filter((child) => child !== null);
+
+    // Find spouses from pids, avoiding reciprocal nesting
+    const spouses = allMembers
+      .filter((m) => {
+        const isSpouse = memberData.pids && memberData.pids.includes(m.balkan_key);
+        const spousePairKey = [memberData.balkan_key, m.balkan_key].sort().join(':');
+        if (isSpouse && !processedSpouses.has(spousePairKey)) {
+          processedSpouses.add(spousePairKey);
+          return true;
+        }
+        return false;
+      })
+      .map((spouse) => buildMemberTree(spouse, allMembers, processedSpouses))
+      .filter((spouse) => spouse !== null);
+
+    return {
+      ...memberData,
+      parentId: null,
+      spouses: spouses || [],
+      children: children || [],
+    };
+  };
+
+  // Collect IDs of members that are spouses (appear in pids)
+  const spouseIds = new Set();
+  members.forEach((member) => {
+    if (member.pids) member.pids.forEach((pid) => spouseIds.add(pid));
+  });
+
+  // Select top-level members (no parents and not a spouse)
+  let formattedMembers = members
+    .filter((member) => !member.fid && !member.mid && !spouseIds.has(member.balkan_key))
+    .sort((a, b) => {
+      // Sort by isOwner: true, then createdAt
+      if (a.isOwner && !b.isOwner) return -1;
+      if (!a.isOwner && b.isOwner) return 1;
+      return (new Date(a.createdAt) || 0) - (new Date(b.createdAt) || 0);
+    })
+    .map((member) => buildMemberTree(member, members));
+
+  // Fallback to isOwner if no top-level members found
+  if (formattedMembers.length === 0) {
+    console.log("No top-level members found, falling back to isOwner: true");
+    formattedMembers = members
+      .filter((member) => member.isOwner)
       .map((member) => buildMemberTree(member, members));
-    // Fallback to isOwner if no top-level members found
-    if (formattedMembers.length === 0) {
-      console.log("No top-level members found, falling back to isOwner: true");
-      formattedMembers = members
-        .filter((member) => member.isOwner)
-        .map((member) => buildMemberTree(member, members));
-    }
+  }
 
-    if (formattedMembers.length === 0) {
-      console.log(
-        "No isOwner members found, falling back to earliest createdAt"
-      );
-      formattedMembers = members
-        .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
-        .map((member) => buildMemberTree(member, members));
-    }
+  // Fallback to earliest createdAt if no isOwner members found
+  if (formattedMembers.length === 0) {
+    console.log("No isOwner members found, falling back to earliest createdAt");
+    formattedMembers = members
+      .sort((a, b) => (new Date(a.createdAt) || 0) - (new Date(b.createdAt) || 0))
+      .slice(0, 1)
+      .map((member) => buildMemberTree(member, members));
+  }
 
-    // Filter out duplicates
-    const seenIds = new Set();
-    const uniqueMembers = formattedMembers.filter((member) => {
-      if (!member) return false;
-
-      // Check if member is already nested
-      const isInSpousesOrChildren = formattedMembers.some((otherMember) => {
-        if (!otherMember || otherMember.id === member.id) return false;
-        const checkNested = (node) => {
-          if (!node) return false;
-          if (node.id === member.id) return true;
-          return (
-            node.spouses.some(checkNested) || node.children.some(checkNested)
-          );
-        };
-        return checkNested(otherMember);
-      });
-
-      if (!isInSpousesOrChildren && !seenIds.has(member.id)) {
-        seenIds.add(member.id);
-        return true;
-      }
-      console.log(
-        `Excluding member ID ${member.id} as it is nested or already seen`
-      );
-      return false;
-    });
-
-    return uniqueMembers
-}
+  // Filter out null members
+  return formattedMembers.filter((member) => member !== null);
+};
 
 const createMemberNode = async (req) => {
   try {
@@ -517,6 +504,8 @@ export const getFamilyTrees = async (req, res) => {
         "updatedAt",
       ],
     });
+
+    // console.log('members',members)
 
     const uniqueMembers =  finalTreeVieBuilder(members)
 
