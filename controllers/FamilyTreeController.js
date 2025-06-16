@@ -5,6 +5,7 @@ import moment from "moment";
 import Users from "../models/UserModel.js";
 import InvitationModel from "../models/InvitationModel.js";
 import TreesModel from "../models/TreesModel.js";
+import { finalTreeVieBuilder } from "./TreeVieBuilder.js";
 
 const prepareMemberData = (body, data = {}) => {
   const allowedFields = [
@@ -136,134 +137,7 @@ function transformFamilyTreeData(inputData) {
   return result;
 }
 
-const finalTreeVieBuilder = (members) => {
-  // Helper function to build recursive member tree
-  const buildMemberTree = (member, allMembers, processedSpouses = new Set(), seenIds = new Set()) => {
-    const memberData = member.get ? member.get({ plain: true }) : member;
 
-    // Warn about empty balkan_key
-    if (!memberData.balkan_key) {
-      console.log(`Warning: Member ID ${memberData.id} has empty balkan_key`);
-      return null;
-    }
-
-    // Avoid processing already seen members in this subtree
-    if (seenIds.has(memberData.id)) {
-      console.log(`Skipping member ID ${memberData.id} due to recursion in subtree`);
-      return null;
-    }
-    seenIds.add(memberData.id);
-
-    // Correct fid/mid for ID 149, 150, 151 (swap due to data error)
-    let correctedFid = memberData.fid;
-    let correctedMid = memberData.mid;
-    if ([149, 150, 151].includes(memberData.id) && memberData.fid === "659c5befa30c" && memberData.mid === "275449d22f84") {
-      correctedFid = "275449d22f84"; // ID 148 (KT, male)
-      correctedMid = "659c5befa30c"; // ID 144 (KK, female)
-      console.log(`Corrected fid/mid for member ID ${memberData.id}`);
-    }
-
-    // Find children where fid or mid matches this member's balkan_key
-    const children = allMembers
-      .filter((m) => {
-        // Apply corrections for child members
-        let mFid = m.id === memberData.id ? correctedFid : m.fid;
-        let mMid = m.id === memberData.id ? correctedMid : m.mid;
-        if ([149, 150, 151].includes(m.id)) {
-          mFid = m.fid === "659c5befa30c" ? "275449d22f84" : m.fid;
-          mMid = m.mid === "275449d22f84" ? "659c5befa30c" : m.mid;
-        }
-        const isChild =
-          (mFid && mFid === memberData.balkan_key) ||
-          (mMid && mMid === memberData.balkan_key && !allMembers.find((cm) => cm.balkan_key === mFid)?.pids?.includes(memberData.balkan_key));
-        if (isChild)
-          console.log(`Found child ID ${m.id} for parent ID ${memberData.id}`);
-        return isChild;
-      })
-      .map((child) => buildMemberTree(child, allMembers, processedSpouses, new Set(seenIds)))
-      .filter((child) => child !== null);
-
-    // Find spouses from pids, avoiding reciprocal nesting
-    const spouses = allMembers
-      .filter((m) => {
-        const isSpouse = memberData.pids && memberData.pids.includes(m.balkan_key);
-        const spousePairKey = [memberData.balkan_key, m.balkan_key].sort().join(':');
-        if (isSpouse && !processedSpouses.has(spousePairKey)) {
-          processedSpouses.add(spousePairKey);
-          return true;
-        }
-        return false;
-      })
-      .map((spouse) => buildMemberTree(spouse, allMembers, processedSpouses, new Set(seenIds)))
-      .filter((spouse) => spouse !== null);
-
-    // Warn about missing pids
-    if (memberData.pids) {
-      memberData.pids.forEach((pid) => {
-        if (!allMembers.find((m) => m.balkan_key === pid)) {
-          console.log(`Warning: Missing spouse with balkan_key ${pid} for member ID ${memberData.id}`);
-        }
-      });
-    }
-
-    return {
-      ...memberData,
-      fid: correctedFid,
-      mid: correctedMid,
-      parentId: null,
-      spouses: spouses || [],
-      children: children || [],
-    };
-  };
-
-  // Collect IDs of members that are spouses (appear in pids)
-  const spouseIds = new Set();
-  members.forEach((member) => {
-    if (member.pids) member.pids.forEach((pid) => spouseIds.add(pid));
-  });
-
-  // Select top-level members (no parents)
-  let formattedMembers = members
-    .filter((member) => !member.fid && !member.mid)
-    .sort((a, b) => {
-      // Sort by isOwner: true, then createdAt
-      if (a.isOwner && !b.isOwner) return -1;
-      if (!a.isOwner && b.isOwner) return 1;
-      return (new Date(a.createdAt) || 0) - (new Date(b.createdAt) || 0);
-    })
-    .map((member) => buildMemberTree(member, members));
-
-  // Fallback to isOwner if no top-level members found
-  if (formattedMembers.length === 0) {
-    console.log("No top-level members found, falling back to isOwner: true");
-    formattedMembers = members
-      .filter((member) => member.isOwner)
-      .map((member) => buildMemberTree(member, members));
-  }
-
-  // Fallback to earliest createdAt if no isOwner members found
-  if (formattedMembers.length === 0) {
-    console.log("No isOwner members found, falling back to earliest createdAt");
-    formattedMembers = members
-      .sort((a, b) => (new Date(a.createdAt) || 0) - (new Date(b.createdAt) || 0))
-      .slice(0, 1)
-      .map((member) => buildMemberTree(member, members));
-  }
-
-  // Filter out null members and ensure no duplicates across top-level members
-  const seenTopLevelIds = new Set();
-  const uniqueMembers = formattedMembers.filter((member) => {
-    if (!member) return false;
-    if (seenTopLevelIds.has(member.id)) {
-      console.log(`Excluding duplicate top-level member ID ${member.id}`);
-      return false;
-    }
-    seenTopLevelIds.add(member.id);
-    return true;
-  });
-
-  return uniqueMembers;
-};
 
 const createMemberNode = async (req) => {
   try {
