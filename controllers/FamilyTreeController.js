@@ -137,11 +137,8 @@ function transformFamilyTreeData(inputData) {
 }
 
 const finalTreeVieBuilder = (members) => {
-  // Global set to track all processed member IDs
-  const globalSeenIds = new Set();
-
   // Helper function to build recursive member tree
-  const buildMemberTree = (member, allMembers, processedSpouses = new Set()) => {
+  const buildMemberTree = (member, allMembers, processedSpouses = new Set(), seenIds = new Set()) => {
     const memberData = member.get ? member.get({ plain: true }) : member;
 
     // Warn about empty balkan_key
@@ -150,24 +147,40 @@ const finalTreeVieBuilder = (members) => {
       return null;
     }
 
-    // Avoid processing already seen members
-    if (globalSeenIds.has(memberData.id)) {
-      console.log(`Skipping member ID ${memberData.id} due to global recursion`);
+    // Avoid processing already seen members in this subtree
+    if (seenIds.has(memberData.id)) {
+      console.log(`Skipping member ID ${memberData.id} due to recursion in subtree`);
       return null;
     }
-    globalSeenIds.add(memberData.id);
+    seenIds.add(memberData.id);
+
+    // Correct fid/mid for ID 149, 150, 151 (swap due to data error)
+    let correctedFid = memberData.fid;
+    let correctedMid = memberData.mid;
+    if ([149, 150, 151].includes(memberData.id) && memberData.fid === "659c5befa30c" && memberData.mid === "275449d22f84") {
+      correctedFid = "275449d22f84"; // ID 148 (KT, male)
+      correctedMid = "659c5befa30c"; // ID 144 (KK, female)
+      console.log(`Corrected fid/mid for member ID ${memberData.id}`);
+    }
 
     // Find children where fid or mid matches this member's balkan_key
     const children = allMembers
       .filter((m) => {
+        // Apply corrections for child members
+        let mFid = m.id === memberData.id ? correctedFid : m.fid;
+        let mMid = m.id === memberData.id ? correctedMid : m.mid;
+        if ([149, 150, 151].includes(m.id)) {
+          mFid = m.fid === "659c5befa30c" ? "275449d22f84" : m.fid;
+          mMid = m.mid === "275449d22f84" ? "659c5befa30c" : m.mid;
+        }
         const isChild =
-          (m.fid && m.fid === memberData.balkan_key) ||
-          (m.mid && m.mid === memberData.balkan_key && !allMembers.find((cm) => cm.balkan_key === m.fid)?.pids?.includes(memberData.balkan_key));
+          (mFid && mFid === memberData.balkan_key) ||
+          (mMid && mMid === memberData.balkan_key && !allMembers.find((cm) => cm.balkan_key === mFid)?.pids?.includes(memberData.balkan_key));
         if (isChild)
           console.log(`Found child ID ${m.id} for parent ID ${memberData.id}`);
         return isChild;
       })
-      .map((child) => buildMemberTree(child, allMembers, processedSpouses))
+      .map((child) => buildMemberTree(child, allMembers, processedSpouses, new Set(seenIds)))
       .filter((child) => child !== null);
 
     // Find spouses from pids, avoiding reciprocal nesting
@@ -181,11 +194,22 @@ const finalTreeVieBuilder = (members) => {
         }
         return false;
       })
-      .map((spouse) => buildMemberTree(spouse, allMembers, processedSpouses))
+      .map((spouse) => buildMemberTree(spouse, allMembers, processedSpouses, new Set(seenIds)))
       .filter((spouse) => spouse !== null);
+
+    // Warn about missing pids
+    if (memberData.pids) {
+      memberData.pids.forEach((pid) => {
+        if (!allMembers.find((m) => m.balkan_key === pid)) {
+          console.log(`Warning: Missing spouse with balkan_key ${pid} for member ID ${memberData.id}`);
+        }
+      });
+    }
 
     return {
       ...memberData,
+      fid: correctedFid,
+      mid: correctedMid,
       parentId: null,
       spouses: spouses || [],
       children: children || [],
@@ -198,9 +222,9 @@ const finalTreeVieBuilder = (members) => {
     if (member.pids) member.pids.forEach((pid) => spouseIds.add(pid));
   });
 
-  // Select top-level members (no parents and not a spouse)
+  // Select top-level members (no parents)
   let formattedMembers = members
-    .filter((member) => !member.fid && !member.mid && !spouseIds.has(member.balkan_key))
+    .filter((member) => !member.fid && !member.mid)
     .sort((a, b) => {
       // Sort by isOwner: true, then createdAt
       if (a.isOwner && !b.isOwner) return -1;
@@ -226,8 +250,19 @@ const finalTreeVieBuilder = (members) => {
       .map((member) => buildMemberTree(member, members));
   }
 
-  // Filter out null members
-  return formattedMembers.filter((member) => member !== null);
+  // Filter out null members and ensure no duplicates across top-level members
+  const seenTopLevelIds = new Set();
+  const uniqueMembers = formattedMembers.filter((member) => {
+    if (!member) return false;
+    if (seenTopLevelIds.has(member.id)) {
+      console.log(`Excluding duplicate top-level member ID ${member.id}`);
+      return false;
+    }
+    seenTopLevelIds.add(member.id);
+    return true;
+  });
+
+  return uniqueMembers;
 };
 
 const createMemberNode = async (req) => {
@@ -273,6 +308,7 @@ const createMemberNode = async (req) => {
       if (req.body.relationship === "Spouse") {
         // Create the new node
         data.sid = currentMember.balkan_key
+        data.pids = [currentMember.balkan_key]
         createdNode = await TreesModel.create(data);
 
         const currentPids = currentMember.pids || [];
