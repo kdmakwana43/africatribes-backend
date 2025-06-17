@@ -1,6 +1,6 @@
 import { Op } from "sequelize";
 import { __ } from "../config/global.js";
-import FamilyTreesModel from "../models/FamilyTreesModel.js";
+// import FamilyTreesModel from "../models/FamilyTreesModel.js";
 import moment from "moment";
 import Users from "../models/UserModel.js";
 import InvitationModel from "../models/InvitationModel.js";
@@ -17,6 +17,7 @@ const prepareMemberData = (body, data = {}) => {
     "profession",
     "relationship",
     "fid",
+    "sid",
     "mid",
     "pids",
   ];
@@ -41,30 +42,32 @@ const prepareMemberData = (body, data = {}) => {
   return data;
 };
 
-function buildFamilyTree(data, parentId = null) {
+function buildFamilyTree(data, fid = "") {
+
+  
+
   return data
     .filter(
       (member) =>
-        member.parentId === parentId && member.relationship !== "Spouse"
+        member.fid === fid && member.relationship !== "Spouse"
     )
     .map((member) => {
-      // Fetch spouses (records with relationship = "Spouse" and parentId matching member.id)
+      // Fetch spouses (records with relationship = "Spouse" and fid matching member.id)
       const spouses = data
         .filter(
           (spouse) =>
-            spouse.parentId === member.id && // Spouse's parentId matches member's id
-            spouse.relationship === "Spouse"
+            spouse.sid.match(member.balkan_key) 
         )
         .map((spouse) => ({
           ...spouse.dataValues,
           spouses: [], // Spouses typically don't have their own spouses
-          children: buildFamilyTree(data, spouse.id), // Spouses can have their own children
+          children: buildFamilyTree(data, spouse.balkan_key), // Spouses can have their own children
         }));
 
       return {
         ...member.dataValues,
         spouses, // Include spouses array
-        children: buildFamilyTree(data, member.id), // Include children
+        children: buildFamilyTree(data, member.balkan_key), // Include children
       };
     });
 }
@@ -157,6 +160,7 @@ const createMemberNode = async (req) => {
       dod: req.body.dod || null,
       birthTown: req.body.birthTown || null,
       profession: req.body.profession || null,
+      sid: req.body.sid || "",
       balkan_key: req.body.balkan_key || __.generateToken(6),
       pids: [],
       profile: req.file ? `/images/${req.file.filename}` : req.body.photo || "",
@@ -183,15 +187,16 @@ const createMemberNode = async (req) => {
         // Create the new node
         data.sid = currentMember.balkan_key
         data.pids = [currentMember.balkan_key]
+        // data.parentId = currentMember.id
         createdNode = await TreesModel.create(data);
 
         const currentPids = currentMember.pids || [];
         currentPids.push(createdNode.balkan_key);
         currentMember.pids = currentPids;
         await currentMember.save();
-        console.log("Updated currentMember pids:", currentMember.pids);
       } else {
         data.fid = currentMember.balkan_key;
+        // data.parentId = currentMember.id
         if (req.body.mid) {
           data.mid = req.body.mid;
         }
@@ -210,145 +215,6 @@ const createMemberNode = async (req) => {
     throw new Error(`Failed to create member node: ${error.message}`);
   }
 };
-
-function transformFamilyTreeKitkat(data) {
-  /// Map to store new IDs (original ID -> new ID)
-  const idMap = new Map();
-  let newId = 1;
-
-  // Collect all individuals by traversing the nested structure
-  const individuals = [];
-
-  function collectIndividuals(person) {
-    if (!person || individuals.some((p) => p.id === person.id)) return;
-    individuals.push(person);
-    person.spouses.forEach((spouse) => collectIndividuals(spouse));
-    person.children.forEach((child) => collectIndividuals(child));
-  }
-
-  // Start collecting from the root
-  data.forEach((root) => collectIndividuals(root));
-
-  // Assign new IDs (1 to N), prioritizing "Myself"
-  const myself = individuals.find((p) => p.relationship === "Myself");
-  if (myself) {
-    idMap.set(myself.id, newId++);
-  }
-  individuals.forEach((person) => {
-    if (person.relationship !== "Myself" && !idMap.has(person.id)) {
-      idMap.set(person.id, newId++);
-    }
-  });
-
-  // Transform each individual
-  const result = individuals.map((person) => {
-    const newPerson = {
-      id: idMap.get(person.id),
-      originalId: person.id,
-      name: `${person.first_name} ${person.surname}`.trim(),
-    };
-
-    // Add photo if available
-    if (person.profile) {
-      newPerson.photo = person.profile.match("http")
-        ? person.profile
-        : `${process.env.BASE_URL}${person.profile}`;
-    }
-
-    // Determine parent relationships (only for non-spouse individuals with a valid parentId)
-    if (person.parentId && person.relationship !== "Spouse") {
-      const parent = individuals.find((p) => p.id === person.parentId);
-      if (parent) {
-        if (parent.gender === "male") {
-          newPerson.fatherId = idMap.get(parent.id);
-        } else if (parent.gender === "female") {
-          newPerson.motherId = idMap.get(parent.id);
-        }
-      }
-
-      // Find the other parent (spouse of the known parent)
-      if (parent && parent.spouses.length > 0) {
-        const otherParent = parent.spouses[0];
-        if (otherParent.gender === "male" && !newPerson.fatherId) {
-          newPerson.fatherId = idMap.get(otherParent.id);
-        } else if (otherParent.gender === "female" && !newPerson.motherId) {
-          newPerson.motherId = idMap.get(otherParent.id);
-        }
-      }
-    }
-
-    // Add spouse IDs (for individuals with spouses or marked as a spouse)
-    const isSpouse = individuals.some((p) =>
-      p.spouses.some((s) => s.id === person.id)
-    );
-    if (person.spouses.length > 0 || isSpouse) {
-      // Collect spouse IDs from person's spouses array
-      let spouseIds = person.spouses.map((spouse) => idMap.get(spouse.id));
-      // Add person as a spouse if they appear in another person's spouses array
-      individuals.forEach((p) => {
-        if (
-          p.spouses.some((s) => s.id === person.id) &&
-          !spouseIds.includes(idMap.get(p.id))
-        ) {
-          spouseIds.push(idMap.get(p.id));
-        }
-      });
-      if (spouseIds.length > 0) {
-        newPerson.spouseIds = spouseIds.sort((a, b) => a - b);
-      }
-    }
-
-    // Add child IDs (from person's children and as spouse's children)
-    let childIds = person.children.map((child) => idMap.get(child.id));
-    // Add children from spouse's children array if person is a spouse
-    if (isSpouse) {
-      individuals.forEach((p) => {
-        if (p.spouses.some((s) => s.id === person.id)) {
-          childIds = [
-            ...childIds,
-            ...p.children.map((child) => idMap.get(child.id)),
-          ];
-        }
-      });
-    }
-    if (childIds.length > 0) {
-      newPerson.childIds = [...new Set(childIds)].sort((a, b) => a - b);
-    }
-
-    // Add sibling IDs (siblings share the same parents, exclude spouses)
-    if (person.parentId && person.relationship !== "Spouse") {
-      const parent = individuals.find((p) => p.id === person.parentId);
-      if (parent) {
-        // Get all children of the parent
-        let parentChildren = parent.children.map((child) =>
-          idMap.get(child.id)
-        );
-        // Get children of the parent's spouse (if any)
-        let spouseChildren =
-          parent.spouses.length > 0
-            ? parent.spouses[0].children.map((child) => idMap.get(child.id))
-            : [];
-        // Combine and filter to get siblings (exclude self and spouses)
-        const siblingIds = [
-          ...new Set([...parentChildren, ...spouseChildren]),
-        ].filter(
-          (id) =>
-            id !== newPerson.id &&
-            individuals.find((p) => idMap.get(p.id) === id).relationship !==
-              "Spouse"
-        );
-        if (siblingIds.length > 0) {
-          newPerson.siblingIds = siblingIds.sort((a, b) => a - b);
-        }
-      }
-    }
-
-    return newPerson;
-  });
-
-  // Sort to place "Myself" (lowest ID) first, then others by new ID
-  return result.sort((a, b) => a.id - b.id);
-}
 
 export const addFamilyNode = async (req, res) => {
   try {
@@ -407,6 +273,8 @@ export const getFamilyTrees = async (req, res) => {
         "relationship",
         "isOwner",
         "balkan_key",
+        "parentId",
+        "sid",
         "fid",
         "mid",
         "pids",
@@ -417,9 +285,11 @@ export const getFamilyTrees = async (req, res) => {
 
     // console.log('members',members)
 
-    const uniqueMembers =  finalTreeVieBuilder(members)
+    // const uniqueMembers =  finalTreeVieBuilder(members)
+    const tree = buildFamilyTree(members);
+    // console.log('tree',tree)
 
-    __.res(res, uniqueMembers, 200);
+    __.res(res, tree, 200);
   } catch (error) {
     console.error("Error in getFamilyTrees:", error.message);
     __._throwError(res, error);
@@ -612,6 +482,7 @@ export const moveChildNode = async (req, res) => {
       );
 
     node.fid = req.body.moveTo;
+    node.parentId = targetNode.id;
     await node.save();
     __.res(res, node, 200);
   } catch (error) {
@@ -655,6 +526,7 @@ export const createParentNode = async (req, res) => {
       if (currentMember) {
         // Update current user parent
         currentMember.fid = createdNode.balkan_key;
+        currentMember.parentId = createdNode.id;
         await currentMember.save();
       }
 
@@ -686,7 +558,6 @@ export const createParentNode = async (req, res) => {
     );
 
 
-      console.log('updates',updates)
 
       __.res(res, createdNode.toJSON(), 200);
     }
@@ -714,6 +585,7 @@ export const createSibling = async (req, res) => {
       gender: req.body.gender,
       userId: req.Auth.id,
       fid: currentMember.fid,
+      parentId: currentMember.id,
       balkan_key: __.generateToken(6),
     };
 
@@ -768,6 +640,7 @@ export const getFamilyBalkanTree = async (req, res) => {
             "birthTown",
             "profession",
             "fid",
+            "sid",
             "mid",
             "pids",
           ],
@@ -783,6 +656,8 @@ export const getFamilyBalkanTree = async (req, res) => {
             "birthTown",
             "profession",
             "fid",
+            "sid",
+            "parentId",
             "mid",
             "pids",
           ],
@@ -816,6 +691,8 @@ export const getFamilyBalkanTreeBalkan = async (req, res) => {
         "pids",
         "mid",
         "fid",
+        "sid",
+        "parentId",
       ],
     });
 
@@ -875,9 +752,16 @@ export const createBalkanNewNodes = async (req, res) => {
         req.body.balkan_key = member.balkan_key;
         req.body.fid = member.fid;
         req.body.mid = member.mid;
+
+       
+
         try {
           req.body.pids = member.pdis ? JSON.stringify(member.pdis) : null;
         } catch (error) {}
+
+        if((!member.sid || member.sid == '') &&  req.body.pids){
+          req.body.sid = req.body.pids
+        }
         const response = await createMemberNode(req);
         console.log("response", response);
       } catch (error) {
@@ -895,6 +779,27 @@ export const createBalkanNewNodes = async (req, res) => {
 };
 
 export const createNewFamilyNodes = async (req, res) => {
+
+  const pidsArray = (mbr) => {
+    if (
+          mbr.pids &&
+          typeof mbr.pids == "string" &&
+          (mbr.pids.match(",") || mbr.pids !== "")
+        ) {
+          try {
+            mbr.pids = mbr.pids.split(",");
+            return mbr.pids;
+          } catch (error) {
+            console.log("Error", error);
+            return [];
+          }
+        }
+
+      // console.log('mbr.pids',mbr.pids)
+      return mbr.pids
+
+  }
+
   try {
     __.validation(["members"], req.body);
 
@@ -902,6 +807,7 @@ export const createNewFamilyNodes = async (req, res) => {
       throw new Error("Please provide valid members data to create");
 
     var members = [...req.body.members];
+    var relationships = req.body.relationship || {}
 
     await Promise.all(
       members.map(async (member) => {
@@ -963,6 +869,35 @@ export const createNewFamilyNodes = async (req, res) => {
           memberObject.dod = null;
         }
 
+        if(relationships && relationships[memberObject.balkan_key]){
+          memberObject.relationship = 'Spouse';
+          try {
+            memberObject.sid = relationships[memberObject.balkan_key].join(',')
+          } catch (error) {
+            
+          }
+        }
+
+        // (!memberObject.relationship || memberObject.relationship == '') && 
+        // if(memberObject.pids && memberObject.pids.length !== 0){
+        //   // Find Partner
+        //   try {
+        //     const isPartner = members.find(m => m.balkan_key !== memberObject.balkan_key &&  m.pids != '' && pidsArray(m).indexOf(memberObject.balkan_key) != -1 )
+        //   if(isPartner && memberObject.fid == ''){
+        //     memberObject.sid = isPartner.balkan_key
+        //   }
+          
+        //   // if(isPartner && memberObject.fid == '' && memberObject.sid != ''){
+        //   //   memberObject.relationship = 'Spouse'
+        //   // } 
+        //   } catch (error) {
+        //    console.log('Error',error) 
+        //   }
+        //   // memberObject.relationship = 'Spouse'
+        // }
+
+
+
         console.log("memberObject", memberObject);
         const existingMember = await TreesModel.findOne({
           where: {
@@ -1001,7 +936,9 @@ export const getFamilyBalkanTreeNew = async (req, res) => {
         "pids",
         "mid",
         "fid",
+        "sid",
         "userId",
+        "relationship"
       ],
     });
 

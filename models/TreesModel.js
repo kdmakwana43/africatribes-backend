@@ -137,6 +137,15 @@ const TreesModel = sequelize.define(
         },
       },
     },
+    parentId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: "Trees",
+        key: "id",
+      },
+      onDelete: "CASCADE",
+    },
     pids: {
       type: DataTypes.TEXT,
       allowNull: true,
@@ -153,6 +162,7 @@ const TreesModel = sequelize.define(
       },
     },
   },
+  
   {
     timestamps: true,
     tableName: "Trees",
@@ -163,6 +173,16 @@ const TreesModel = sequelize.define(
 TreesModel.belongsTo(Users, {
   foreignKey: "userId",
   as: "user",
+});
+
+TreesModel.hasMany(TreesModel, {
+  foreignKey: "parentId",
+  as: "children",
+});
+
+TreesModel.belongsTo(TreesModel, {
+  foreignKey: "parentId",
+  as: "parent",
 });
 
 export default TreesModel;
