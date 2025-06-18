@@ -481,6 +481,8 @@ export const moveChildNode = async (req, res) => {
         "The target not not found! Please refresh the page and check again."
       );
 
+    if(node.balkan_key == targetNode.fid)  throw new Error(`${node.first_name} is root parent! can not move this.`);
+
     node.fid = req.body.moveTo;
     node.parentId = targetNode.id;
     await node.save();
