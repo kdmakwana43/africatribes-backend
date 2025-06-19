@@ -323,7 +323,7 @@ export const getFamilyTreesPublic = async (req, res) => {
     });
 
     // Build tree
-   const uniqueMembers =  finalTreeVieBuilder(flatMembers)
+   const uniqueMembers =  buildFamilyTree(flatMembers)
 
     __.res(res, uniqueMembers, 200);
 
