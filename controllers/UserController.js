@@ -942,12 +942,15 @@ export const getLandingPageStates = async (req, res) => {
 
 export const getUsersGroup = async (req, res) => {
   try {
-    if (!req.body.group) throw new Error('Please provide a group name');
 
-    const allowedFields = ['last_name', 'village', 'tribe', 'hometown', 'chief', 'alias', 'totem'];
+    if(!req.body.group) throw new Error('Please provide a group name');
+
+
+    const allowedFields = ['last_name','village', 'tribe', 'hometown', 'chief', 'alias', 'totem'];
     if (!allowedFields.includes(req.body.group)) {
       throw new Error(`Invalid group name. Allowed groups are: ${allowedFields.join(', ')}`);
     }
+
 
     const { skip = 0, limit = 10, sort = "createdAt:DESC" } = req.body;
     const [sortField, sortOrder] = sort.split(":");
@@ -958,32 +961,30 @@ export const getUsersGroup = async (req, res) => {
         [Op.and]: [
           { [Op.ne]: null },
           { [Op.ne]: '' },
-        ],
+        ]
       },
     };
 
     if (req.body.char && req.body.char.trim() !== '') {
       condition[req.body.group] = {
-        [Op.startsWith]: req.body.char // Use Op.startsWith
-        // OR: [Op.like]: `${req.body.char}%` if Op.startsWith is unavailable
+        [Op.like]: `${req.body.char}%`
       };
     }
 
     const users = await Users.findAll({
       attributes: [
-        [Sequelize.fn('TRIM', Sequelize.fn('LOWER', Sequelize.col(req.body.group))), req.body.group],
+        [Sequelize.col(req.body.group), req.body.group],
+        // [Sequelize.fn('COUNT', Sequelize.col('*')), 'count']
       ],
       where: condition,
-      group: [Sequelize.fn('TRIM', Sequelize.fn('LOWER', Sequelize.col(req.body.group)))],
-      order: [[Sequelize.fn('TRIM', Sequelize.fn('LOWER', Sequelize.col(req.body.group))), sortOrder?.toUpperCase() || 'DESC']],
-      offset: parseInt(skip),
-      limit: parseInt(limit),
+      group: [req.body.group],
+      order: [[Sequelize.col(req.body.group), sortOrder?.toUpperCase() || 'DESC']],
     });
 
-    if (req.body.wantCount) {
+    if(req.body.wantCount){
       const totalMatchCount = await Users.count({
         distinct: true,
-        col: Sequelize.fn('TRIM', Sequelize.fn('LOWER', Sequelize.col(req.body.group))),
+        col: req.body.group,
         where: condition,
       });
       __.res(res, { users, totalMatchCount }, 200);
@@ -994,6 +995,6 @@ export const getUsersGroup = async (req, res) => {
   } catch (error) {
     __._throwError(res, error);
   }
-};
+}
 
 
