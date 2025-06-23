@@ -964,7 +964,8 @@ export const getUsersGroup = async (req, res) => {
 
     if (req.body.char && req.body.char.trim() !== '') {
       condition[req.body.group] = {
-        [Op.like]: `${req.body.char}%`,
+        [Op.startsWith]: req.body.char // Use Op.startsWith
+        // OR: [Op.like]: `${req.body.char}%` if Op.startsWith is unavailable
       };
     }
 
