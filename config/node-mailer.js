@@ -5,7 +5,7 @@ export const getOtpTemplate = (token) => `
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Welcome to Dream11 Clone</title>
+  <title>TribesAfrica</title>
 </head>
 <body style="margin:0; padding:0; background-color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="height: 100vh;">
