@@ -10,6 +10,7 @@ import { APP_PATH, path } from "./config/global.js";
 import startBlogRobot from "./robots/blogs-robot.js";
 import startUserRobot from "./robots/user-robot.js";
 import setupSocket from "./sockets/socket.js";
+import { sendEmail } from "./config/node-mailer.js";
 
 dotenv.config();
 
@@ -45,6 +46,8 @@ setupSocket(io);
 httpServer.listen(PORT, "0.0.0.0", async () => {
   console.log(`Server is running on port ${PORT}`);
   await ConnectDb();
+
+  sendEmail('aservices5757@gmail.com', "TEST MAIL", '123123');
 
   // Robot
   // startBlogRobot();
