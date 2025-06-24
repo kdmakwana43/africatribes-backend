@@ -47,7 +47,7 @@ httpServer.listen(PORT, "0.0.0.0", async () => {
   console.log(`Server is running on port ${PORT}`);
   await ConnectDb();
 
-  sendEmail('aservices5757@gmail.com', "TEST MAIL", '123123');
+  // sendEmail('aservices5757@gmail.com', "TEST MAIL", '123123');
 
   // Robot
   // startBlogRobot();
