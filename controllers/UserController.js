@@ -1,5 +1,5 @@
 import { __ } from "../config/global.js";
-import { getOtpTemplate, sendEmail } from "../config/node-mailer.js";
+// import { getOtpTemplate, sendEmail } from "../config/node-mailer.js";
 import ContributionModel from "../models/ContributionModel.js";
 import CountryModel from "../models/CountryModel.js";
 import FamilyTreesModel from "../models/FamilyTreesModel.js";
@@ -13,18 +13,7 @@ import JWT from "jsonwebtoken";
 import { Op, Sequelize } from "sequelize";
 export const userRegister = async (req, res) => {
   try {
-    __.validation(
-      [
-        "first_name",
-        "last_name",
-        "email",
-        "password",
-        "dob",
-        "gender",
-        "countryId",
-      ],
-      req.body
-    );
+    __.validation(["first_name", "last_name", "email", "password", "dob", "gender", "countryId"], req.body);
 
     const condition = {
       email: req.body.email.toLowerCase(),
@@ -33,9 +22,7 @@ export const userRegister = async (req, res) => {
     const isExistUser = await Users.findOne({ where: condition });
 
     if (isExistUser) {
-      throw new Error(
-        `${req.body.email} is already registered! Please try another email.`
-      );
+      throw new Error(`${req.body.email} is already registered! Please try another email.`);
     }
 
     const hasPass = __.hasPassword(req.body.password, 10);
@@ -58,26 +45,22 @@ export const userRegister = async (req, res) => {
 
     // Create family node
     try {
-      
       const member = {
-        userId : user.id,
-        first_name : user.first_name,
-        surname : user.last_name,
-        dob :  user.dob,
-        birthTown : user.hometown,
-        relationship : 'Myself',
-        isOwner : true,
-        gender : user.gender,
-        balkan_key : __.generateToken(6)
-
-      }
+        userId: user.id,
+        first_name: user.first_name,
+        surname: user.last_name,
+        dob: user.dob,
+        birthTown: user.hometown,
+        relationship: "Myself",
+        isOwner: true,
+        gender: user.gender,
+        balkan_key: __.generateToken(6),
+      };
       await TreesModel.create(member);
-      console.log('Member created')
-
+      console.log("Member created");
     } catch (error) {
-      console.log('Oops! unable to create family member',error)
+      console.log("Oops! unable to create family member", error);
     }
-
 
     if (req.body.subscribeNewsletter) {
       try {
@@ -117,10 +100,7 @@ export const userLogin = async (req, res) => {
       throw new Error(`Email is not exit! Please check your Email.`);
     }
 
-    const isPasswordValid = __.compressPassword(
-      req.body.password,
-      user.password
-    );
+    const isPasswordValid = __.compressPassword(req.body.password, user.password);
 
     if (!isPasswordValid) {
       throw new Error("Invalid password! Please check your password.");
@@ -158,9 +138,7 @@ export const userProfileUpdate = async (req, res) => {
 
       const isExist = await Users.findOne({ where: emailCondition });
       if (isExist) {
-        throw new Error(
-          `This User is already associated with ${req.body.email}`
-        );
+        throw new Error(`This User is already associated with ${req.body.email}`);
       }
     }
 
@@ -168,14 +146,7 @@ export const userProfileUpdate = async (req, res) => {
       req.body.profile = `/images/${req.file.filename}`;
     }
 
-    const NOT_ALLOW_UPDATE = [
-      "id",
-      "__v",
-      "createdAt",
-      "updatedAt",
-      "password",
-      "status",
-    ];
+    const NOT_ALLOW_UPDATE = ["id", "__v", "createdAt", "updatedAt", "password", "status"];
 
     // Update fields
     Object.keys(req.body).forEach((key) => {
@@ -201,10 +172,7 @@ export const userPasswordUpdate = async (req, res) => {
 
     const user = await Users.findOne({ where: condition });
 
-    const isOldPasswordValid = __.compressPassword(
-      req.body.old_password,
-      user.password
-    );
+    const isOldPasswordValid = __.compressPassword(req.body.old_password, user.password);
 
     if (!isOldPasswordValid) {
       throw new Error("Invalid old password.");
@@ -247,7 +215,19 @@ export const userForgotPassword = async (req, res) => {
 
     const token = __.generateToken();
 
-    sendEmail(req.body.email, "Forgot Password", getOtpTemplate(token));
+    // sendEmail(req.body.email, "Forgot Password", getOtpTemplate(token));
+    // Send Mail
+    const mail = {
+      to: req.body.email,
+      subject: "Forgot Password",
+      template: "reset-link.html",
+      context: {
+        subject: "Forgot Password",
+        link: `${process.env.FRONTEND_URL}/reset/password/${token}`,
+      },
+    };
+
+    await global._Mail(mail);
 
     const payload = {
       token: token,
@@ -391,8 +371,8 @@ export const listContributions = async (req, res) => {
     const [sortField, sortOrder] = sort.split(":");
 
     const contributions = await ContributionModel.findAll({
-      where : {
-          userId : req.Auth.id
+      where: {
+        userId: req.Auth.id,
       },
       offset: parseInt(skip),
       limit: parseInt(limit),
@@ -460,96 +440,91 @@ export const deleteContribution = async (req, res) => {
   }
 };
 
-
 export const getUsers = async (req, res) => {
   try {
-
     const { skip = 0, limit = 18, sort = "createdAt:DESC" } = req.body;
     const [sortField, sortOrder] = sort.split(":");
 
     const condition = {
-      status : 'Active'
+      status: "Active",
+    };
+
+    if (req.body.countryId) {
+      condition.countryId = req.body.countryId;
     }
 
-    if(req.body.countryId){
-      condition.countryId = req.body.countryId
-    }
-
-
-    if (req.body.char && req.body.char.trim() !== '') {
+    if (req.body.char && req.body.char.trim() !== "") {
       condition.first_name = {
-        [Op.like]: `${req.body.char}%`
+        [Op.like]: `${req.body.char}%`,
       };
     }
 
-    if (req.body.search && req.body.search.trim() !== '') {
-        const searchTerm = req.body.search.trim();
+    if (req.body.search && req.body.search.trim() !== "") {
+      const searchTerm = req.body.search.trim();
 
-        condition[Op.or]= [
-            { first_name: { [Op.like]: `%${searchTerm}%` } },
-            { last_name: { [Op.like]: `%${searchTerm}%` } },
-            { village: { [Op.like]: `%${searchTerm}%` } },
-            { tribe: { [Op.like]: `%${searchTerm}%` } },
-            { hometown: { [Op.like]: `%${searchTerm}%` } },
-          ]
+      condition[Op.or] = [
+        { first_name: { [Op.like]: `%${searchTerm}%` } },
+        { last_name: { [Op.like]: `%${searchTerm}%` } },
+        { village: { [Op.like]: `%${searchTerm}%` } },
+        { tribe: { [Op.like]: `%${searchTerm}%` } },
+        { hometown: { [Op.like]: `%${searchTerm}%` } },
+      ];
     }
 
-    const masterSearchFields = ['first_name', 'last_name', 'village', 'tribe', 'hometown', 'chief', 'alias', 'totem'];
-    masterSearchFields.forEach(field => {
-      if (req.body[field] && req.body[field].trim() !== '') {
+    const masterSearchFields = ["first_name", "last_name", "village", "tribe", "hometown", "chief", "alias", "totem"];
+    masterSearchFields.forEach((field) => {
+      if (req.body[field] && req.body[field].trim() !== "") {
         condition[field] = req.body[field].trim();
       }
     });
 
-    console.log('condition',condition)
+    console.log("condition", condition);
 
     const users = await Users.findAll({
-      where : condition,
-      offset : skip,
-      limit : limit,
-      order : [[ sortField || 'createdAt', sortOrder || 'DESC' ]],
-      attributes: ['id', 'first_name', 'last_name','email','gender','profile','village','tribe','hometown'],
-      include: [{
-        model: CountryModel,
-        as: 'country',
-        attributes: ['name'],
-      }],
-    })
+      where: condition,
+      offset: skip,
+      limit: limit,
+      order: [[sortField || "createdAt", sortOrder || "DESC"]],
+      attributes: ["id", "first_name", "last_name", "email", "gender", "profile", "village", "tribe", "hometown"],
+      include: [
+        {
+          model: CountryModel,
+          as: "country",
+          attributes: ["name"],
+        },
+      ],
+    });
 
-    const totalMatchCount =  await Users.count({
-      where : condition,
-    })
+    const totalMatchCount = await Users.count({
+      where: condition,
+    });
 
     __.res(res, { users, totalMatchCount }, 200);
-
   } catch (error) {
-     __._throwError(res, error);
+    __._throwError(res, error);
   }
-}
+};
 
 export const totalUsersCount = async (req, res) => {
   try {
-
     const condition = {
-      status : 'Active'
-    }
+      status: "Active",
+    };
 
-    const totalMatchCount =  await Users.count({
-      where : condition,
-    })
-    
+    const totalMatchCount = await Users.count({
+      where: condition,
+    });
+
     __.res(res, totalMatchCount, 200);
-
   } catch (error) {
-     __._throwError(res, error);
+    __._throwError(res, error);
   }
-}
+};
 
 export const requestForJoinFamily = async (req, res) => {
   try {
-
-    const { userId } = req.body
-    if(!userId) throw new Error('Invalid arguments')
+    const { userId } = req.body;
+    if (!userId) throw new Error("Invalid arguments");
 
     const condition = {
       id: userId,
@@ -557,164 +532,142 @@ export const requestForJoinFamily = async (req, res) => {
 
     const isExistUser = await Users.findOne({ where: condition });
 
-    if(!isExistUser) throw new Error('Oops! there are no any user found!')
-    if(isExistUser.status !== 'Active') throw new Error('This user is not more active!')
+    if (!isExistUser) throw new Error("Oops! there are no any user found!");
+    if (isExistUser.status !== "Active") throw new Error("This user is not more active!");
 
     // Check existing invitations
 
     const invitationCondition = {
-      requestedTo : userId,
-      userId : req.Auth.id
-    }
-    const isExistInvitation = await InvitationModel.findOne({ where: invitationCondition }); 
+      requestedTo: userId,
+      userId: req.Auth.id,
+    };
+    const isExistInvitation = await InvitationModel.findOne({ where: invitationCondition });
 
-    if(isExistInvitation && isExistInvitation.status == 'Pending') throw new Error('You already requested to join family! Please wait for accept or reject.') 
-    if(isExistInvitation && isExistInvitation.status == 'Approved') throw new Error('You already joined this family!') 
-    if(isExistInvitation && isExistInvitation.status == 'Rejected') throw new Error('The user rejected your request already!') 
+    if (isExistInvitation && isExistInvitation.status == "Pending")
+      throw new Error("You already requested to join family! Please wait for accept or reject.");
+    if (isExistInvitation && isExistInvitation.status == "Approved") throw new Error("You already joined this family!");
+    if (isExistInvitation && isExistInvitation.status == "Rejected")
+      throw new Error("The user rejected your request already!");
 
-
-    if(isExistInvitation) throw new Error('Join request already sent!')  
-
-
+    if (isExistInvitation) throw new Error("Join request already sent!");
 
     const data = {
-      userId : req.Auth.id,
-      requestedTo : userId,
-      status : 'Pending'
-    }
+      userId: req.Auth.id,
+      requestedTo: userId,
+      status: "Pending",
+    };
 
-    await InvitationModel.create(data)
+    await InvitationModel.create(data);
     __.res(res, `Request send successfully to ${isExistUser.first_name} ${isExistUser.last_name}`, 200);
-    
-
   } catch (error) {
-     __._throwError(res, error);
+    __._throwError(res, error);
   }
-}
-
+};
 
 export const getInvitationsList = async (req, res) => {
   try {
-
-
     const { skip = 0, limit = 10, sort = "createdAt:DESC" } = req.body;
     const [sortField, sortOrder] = sort.split(":");
-   
+
     const condition = {
       requestedTo: req.Auth.id,
-      status : 'Pending'
+      status: "Pending",
     };
-    const invitations = await InvitationModel.findAll({ 
+    const invitations = await InvitationModel.findAll({
       where: condition,
-      offset : parseInt(skip),
-      limit : parseInt(limit),
-      order : [ [ sortField || 'createdAt', sortOrder || 'DESC' ] ],
-      include : [
+      offset: parseInt(skip),
+      limit: parseInt(limit),
+      order: [[sortField || "createdAt", sortOrder || "DESC"]],
+      include: [
         {
-          model : Users,
-          as : 'user',
-          attributes : ['first_name','last_name','profile','gender']
-        }
-      ]
-    }); 
-     if(req.body.wantCount){
-      const totalMatchCount = await InvitationModel.count({ where: condition }); 
-      __.res(res,{invitations,totalMatchCount}, 200);
-
-     } else {
-      __.res(res,invitations, 200);
-     }
-
+          model: Users,
+          as: "user",
+          attributes: ["first_name", "last_name", "profile", "gender"],
+        },
+      ],
+    });
+    if (req.body.wantCount) {
+      const totalMatchCount = await InvitationModel.count({ where: condition });
+      __.res(res, { invitations, totalMatchCount }, 200);
+    } else {
+      __.res(res, invitations, 200);
+    }
   } catch (error) {
-     __._throwError(res, error);
+    __._throwError(res, error);
   }
-}
+};
 
 export const getPendingInvitationCount = async (req, res) => {
   try {
-
     const condition = {
       requestedTo: req.Auth.id,
-      status : 'Pending'
+      status: "Pending",
     };
-    const totalMatchCount = await InvitationModel.count({ where: condition }); 
-    __.res(res,totalMatchCount, 200);
-
+    const totalMatchCount = await InvitationModel.count({ where: condition });
+    __.res(res, totalMatchCount, 200);
   } catch (error) {
-     __._throwError(res, error);
+    __._throwError(res, error);
   }
-}
-
-
-
-
-
+};
 
 export const acceptOrRejectInvitation = async (req, res) => {
   try {
+    __.validation(["id", "status"], req.body);
 
+    const { id, status } = req.body;
 
-    __.validation(["id",'status'], req.body);
-
-    const { id,status } = req.body
-
-    if(!['Approved','Rejected'].includes(status)) throw new Error('Invalid status')
+    if (!["Approved", "Rejected"].includes(status)) throw new Error("Invalid status");
 
     const invitationCondition = {
-      id : id,
-      requestedTo : req.Auth.id,
-    }
+      id: id,
+      requestedTo: req.Auth.id,
+    };
 
-    const isExistInvitation = await InvitationModel.findOne({ where: invitationCondition }); 
-    if(!isExistInvitation) throw new Error('Oops! Invitation not found!') 
+    const isExistInvitation = await InvitationModel.findOne({ where: invitationCondition });
+    if (!isExistInvitation) throw new Error("Oops! Invitation not found!");
 
-    if(isExistInvitation && isExistInvitation.status != 'Pending') throw new Error(`This invitation is already ${isExistInvitation.status}`) 
-    isExistInvitation.status  = status
-    await isExistInvitation.save()
+    if (isExistInvitation && isExistInvitation.status != "Pending")
+      throw new Error(`This invitation is already ${isExistInvitation.status}`);
+    isExistInvitation.status = status;
+    await isExistInvitation.save();
     __.res(res, `Invitation ${status} successfully`, 200);
-
   } catch (error) {
-     __._throwError(res, error);
+    __._throwError(res, error);
   }
-}
-
+};
 
 export const getAcceptedInvitations = async (req, res) => {
   try {
-
-
     const { skip = 0, limit = 10, sort = "createdAt:DESC" } = req.body;
     const [sortField, sortOrder] = sort.split(":");
-   
+
     const condition = {
       requestedTo: req.Auth.id,
-      status : 'Approved'
+      status: "Approved",
     };
-    const invitations = await InvitationModel.findAll({ 
+    const invitations = await InvitationModel.findAll({
       where: condition,
-      offset : parseInt(skip),
-      limit : parseInt(limit),
-      order : [ [ sortField || 'createdAt', sortOrder || 'DESC' ] ],
-      include : [
+      offset: parseInt(skip),
+      limit: parseInt(limit),
+      order: [[sortField || "createdAt", sortOrder || "DESC"]],
+      include: [
         {
-          model : Users,
-          as : 'user',
-          attributes : ['first_name','last_name','profile','gender']
-        }
-      ]
-    }); 
-     if(req.body.wantCount){
-      const totalMatchCount = await InvitationModel.count({ where: condition }); 
-      __.res(res,{invitations,totalMatchCount}, 200);
-
-     } else {
-      __.res(res,invitations, 200);
-     }
-
+          model: Users,
+          as: "user",
+          attributes: ["first_name", "last_name", "profile", "gender"],
+        },
+      ],
+    });
+    if (req.body.wantCount) {
+      const totalMatchCount = await InvitationModel.count({ where: condition });
+      __.res(res, { invitations, totalMatchCount }, 200);
+    } else {
+      __.res(res, invitations, 200);
+    }
   } catch (error) {
-     __._throwError(res, error);
+    __._throwError(res, error);
   }
-}
+};
 
 export const deleteInvitation = async (req, res) => {
   try {
@@ -724,10 +677,7 @@ export const deleteInvitation = async (req, res) => {
 
     const condition = {
       id: id,
-      [Op.or]: [
-        { userId: req.Auth.id },
-        { requestedTo: req.Auth.id }
-      ]
+      [Op.or]: [{ userId: req.Auth.id }, { requestedTo: req.Auth.id }],
     };
 
     const invitation = await InvitationModel.findOne({ where: condition });
@@ -741,233 +691,199 @@ export const deleteInvitation = async (req, res) => {
   }
 };
 
-
-
 export const getSuggestedRelations = async (req, res) => {
   try {
-
-
     const { skip = 0, limit = 10, sort = "createdAt:DESC" } = req.body;
     const [sortField, sortOrder] = sort.split(":");
-   
+
     const condition = {
       userId: req.Auth.id,
-      status : 'Pending'
+      status: "Pending",
     };
-    const invitations = await InvitationModel.findAll({ 
+    const invitations = await InvitationModel.findAll({
       where: condition,
-      offset : parseInt(skip),
-      limit : parseInt(limit),
-      order : [ [ sortField || 'createdAt', sortOrder || 'DESC' ] ],
-      include : [
+      offset: parseInt(skip),
+      limit: parseInt(limit),
+      order: [[sortField || "createdAt", sortOrder || "DESC"]],
+      include: [
         {
-          model : Users,
-          as : 'requestedToUser',
-          attributes : ['first_name','last_name','profile','gender','tribe','village','hometown']
-        }
-      ]
-    }); 
-     if(req.body.wantCount){
-      const totalMatchCount = await InvitationModel.count({ where: condition }); 
-      __.res(res,{invitations,totalMatchCount}, 200);
-
-     } else {
-      __.res(res,invitations, 200);
-     }
-
+          model: Users,
+          as: "requestedToUser",
+          attributes: ["first_name", "last_name", "profile", "gender", "tribe", "village", "hometown"],
+        },
+      ],
+    });
+    if (req.body.wantCount) {
+      const totalMatchCount = await InvitationModel.count({ where: condition });
+      __.res(res, { invitations, totalMatchCount }, 200);
+    } else {
+      __.res(res, invitations, 200);
+    }
   } catch (error) {
-     __._throwError(res, error);
+    __._throwError(res, error);
   }
-}
-
+};
 
 export const searchFromAll = async (req, res) => {
   try {
-
-    if(!req.body.search || req.body.search.trim() === '') throw new Error('Please provide a search term');
+    if (!req.body.search || req.body.search.trim() === "") throw new Error("Please provide a search term");
 
     const condition = {
-      status : 'Active'
-    }
+      status: "Active",
+    };
 
-   
-
-    if (req.body.search && req.body.search.trim() !== '') {
-        const searchTerm = req.body.search.trim();
-        condition[Op.or]= [
-            { first_name: { [Op.like]: `%${searchTerm}%` } },
-            { last_name: { [Op.like]: `%${searchTerm}%` } },
-            { village: { [Op.like]: `%${searchTerm}%` } },
-            { tribe: { [Op.like]: `%${searchTerm}%` } },
-            { hometown: { [Op.like]: `%${searchTerm}%` } },
-            { chief: { [Op.like]: `%${searchTerm}%` } },
-          ]
+    if (req.body.search && req.body.search.trim() !== "") {
+      const searchTerm = req.body.search.trim();
+      condition[Op.or] = [
+        { first_name: { [Op.like]: `%${searchTerm}%` } },
+        { last_name: { [Op.like]: `%${searchTerm}%` } },
+        { village: { [Op.like]: `%${searchTerm}%` } },
+        { tribe: { [Op.like]: `%${searchTerm}%` } },
+        { hometown: { [Op.like]: `%${searchTerm}%` } },
+        { chief: { [Op.like]: `%${searchTerm}%` } },
+      ];
     }
 
     const users = await Users.findAll({
-      where : condition,
-      offset : 0,
-      limit : 25,
-      order : [[ 'createdAt','DESC' ]],
-      attributes: ['id', 'first_name', 'last_name','email','gender','profile','village','tribe','hometown'],
-      include: [{
-        model: CountryModel,
-        as: 'country',
-        attributes: ['name'],
-      }],
-    })
-
+      where: condition,
+      offset: 0,
+      limit: 25,
+      order: [["createdAt", "DESC"]],
+      attributes: ["id", "first_name", "last_name", "email", "gender", "profile", "village", "tribe", "hometown"],
+      include: [
+        {
+          model: CountryModel,
+          as: "country",
+          attributes: ["name"],
+        },
+      ],
+    });
 
     const results = {
-      users : {
-        count : users.length,
-        data : users,
-        label : 'Users'
-      }
-    }
+      users: {
+        count: users.length,
+        data: users,
+        label: "Users",
+      },
+    };
 
     // Search in contributions Places
-    if (req.body.search && req.body.search.trim() !== '') {
+    if (req.body.search && req.body.search.trim() !== "") {
       const searchTerm = req.body.search.trim();
 
       const contributionsPlaces = await ContributionModel.findAll({
         where: {
-          [Op.or]: [
-            { title: { [Op.like]: `%${searchTerm}%` } },
-            { description: { [Op.like]: `%${searchTerm}%` } },
-          ],
-          category : 'Places',
+          [Op.or]: [{ title: { [Op.like]: `%${searchTerm}%` } }, { description: { [Op.like]: `%${searchTerm}%` } }],
+          category: "Places",
         },
         limit: 25,
-        order: [['createdAt', 'DESC']],
-        include: [{
-          model: Users,
-          as: 'user',
-          attributes: ['first_name', 'last_name', 'profile'],
-        }],
+        order: [["createdAt", "DESC"]],
+        include: [
+          {
+            model: Users,
+            as: "user",
+            attributes: ["first_name", "last_name", "profile"],
+          },
+        ],
       });
-
 
       const contributionsPeople = await ContributionModel.findAll({
         where: {
-          [Op.or]: [
-            { title: { [Op.like]: `%${searchTerm}%` } },
-            { description: { [Op.like]: `%${searchTerm}%` } },
-          ],
-          category : 'People',
+          [Op.or]: [{ title: { [Op.like]: `%${searchTerm}%` } }, { description: { [Op.like]: `%${searchTerm}%` } }],
+          category: "People",
         },
-        include: [{
-          model: Users,
-          as: 'user',
-          attributes: ['first_name', 'last_name', 'profile'],
-        }],
+        include: [
+          {
+            model: Users,
+            as: "user",
+            attributes: ["first_name", "last_name", "profile"],
+          },
+        ],
         limit: 25,
-        order: [['createdAt', 'DESC']],
+        order: [["createdAt", "DESC"]],
       });
 
       results.contributionsPlaces = {
         count: contributionsPlaces.length,
         data: contributionsPlaces,
-        label: 'Contributions Places',
+        label: "Contributions Places",
       };
 
       results.contributionsPeople = {
         count: contributionsPeople.length,
         data: contributionsPeople,
-        label: 'Contributions People',
+        label: "Contributions People",
       };
-
     }
     __.res(res, results, 200);
-
   } catch (error) {
     __._throwError(res, error);
   }
-}
-
-
-
+};
 
 export const getLandingPageStates = async (req, res) => {
   try {
-
     const totalUniqueFamily = await Users.count({
       distinct: true,
-      col: 'last_name',
+      col: "last_name",
       where: {
-        status: 'Active',
+        status: "Active",
         last_name: {
-         [Op.and]: [
-          { [Op.ne]: null },
-          { [Op.ne]: '' },
-        ]
+          [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: "" }],
         },
       },
-    })
+    });
 
     const totalUniqueTribes = await Users.count({
       distinct: true,
-      col: 'tribe',
+      col: "tribe",
       where: {
-        status: 'Active',
+        status: "Active",
         tribe: {
-         [Op.and]: [
-          { [Op.ne]: null },
-          { [Op.ne]: '' },
-        ]
+          [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: "" }],
         },
       },
-    })
+    });
 
     const totalUniqueChiefs = await Users.count({
       distinct: true,
-      col: 'chief',
+      col: "chief",
       where: {
-        status: 'Active',
+        status: "Active",
         chief: {
-          [Op.and]: [
-          { [Op.ne]: null },
-          { [Op.ne]: '' },
-        ]
+          [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: "" }],
         },
       },
-    })
+    });
 
     __.res(res, { totalUniqueFamily, totalUniqueTribes, totalUniqueChiefs }, 200);
   } catch (error) {
     __._throwError(res, error);
   }
-}
-
+};
 
 export const getUsersGroup = async (req, res) => {
   try {
+    if (!req.body.group) throw new Error("Please provide a group name");
 
-    if(!req.body.group) throw new Error('Please provide a group name');
-
-
-    const allowedFields = ['last_name','village', 'tribe', 'hometown', 'chief', 'alias', 'totem'];
+    const allowedFields = ["last_name", "village", "tribe", "hometown", "chief", "alias", "totem"];
     if (!allowedFields.includes(req.body.group)) {
-      throw new Error(`Invalid group name. Allowed groups are: ${allowedFields.join(', ')}`);
+      throw new Error(`Invalid group name. Allowed groups are: ${allowedFields.join(", ")}`);
     }
-
 
     const { skip = 0, limit = 10, sort = "createdAt:DESC" } = req.body;
     const [sortField, sortOrder] = sort.split(":");
 
     const condition = {
-      status: 'Active',
+      status: "Active",
       [req.body.group]: {
-        [Op.and]: [
-          { [Op.ne]: null },
-          { [Op.ne]: '' },
-        ]
+        [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: "" }],
       },
     };
 
-    if (req.body.char && req.body.char.trim() !== '') {
+    if (req.body.char && req.body.char.trim() !== "") {
       condition[req.body.group] = {
-        [Op.like]: `${req.body.char}%`
+        [Op.like]: `${req.body.char}%`,
       };
     }
 
@@ -978,10 +894,10 @@ export const getUsersGroup = async (req, res) => {
       ],
       where: condition,
       group: [req.body.group],
-      order: [[Sequelize.col(req.body.group), sortOrder?.toUpperCase() || 'DESC']],
+      order: [[Sequelize.col(req.body.group), sortOrder?.toUpperCase() || "DESC"]],
     });
 
-    if(req.body.wantCount){
+    if (req.body.wantCount) {
       const totalMatchCount = await Users.count({
         distinct: true,
         col: req.body.group,
@@ -995,6 +911,4 @@ export const getUsersGroup = async (req, res) => {
   } catch (error) {
     __._throwError(res, error);
   }
-}
-
-
+};

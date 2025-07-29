@@ -10,7 +10,7 @@ import { APP_PATH, path } from "./config/global.js";
 import startBlogRobot from "./robots/blogs-robot.js";
 import startUserRobot from "./robots/user-robot.js";
 import setupSocket from "./sockets/socket.js";
-import { sendEmail } from "./config/node-mailer.js";
+import mail from "./mails/mails.js";
 
 dotenv.config();
 
@@ -19,10 +19,10 @@ const PORT = process.env.PORT || 8080;
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: '*',
+    origin: "*",
     methods: ["GET", "POST"],
-    transports: ['websocket', 'polling'],
-    credentials: true
+    transports: ["websocket", "polling"],
+    credentials: true,
   },
 });
 
@@ -31,6 +31,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public", { maxAge: "365d" }));
 app.use(express.static(path.join(APP_PATH, "../public")));
+
+// Globals
+global._Mail = mail;
 
 // Admin Routes
 app.use("/master", adminRouter);
@@ -46,8 +49,6 @@ setupSocket(io);
 httpServer.listen(PORT, "0.0.0.0", async () => {
   console.log(`Server is running on port ${PORT}`);
   await ConnectDb();
-
-  // sendEmail('aservices5757@gmail.com', "TEST MAIL", '123123');
 
   // Robot
   // startBlogRobot();
