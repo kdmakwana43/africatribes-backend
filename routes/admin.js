@@ -115,7 +115,7 @@ const userResourceOptions = {
     },
     edit: {
       before: async (request) => {
-        if (request.payload?.password) {
+        if (request.payload?.password && request.payload?.password.length() > 16) {
           const hashedPassword = hasPassword(request.payload.password);
           request.payload.password = hashedPassword;
         } else {
