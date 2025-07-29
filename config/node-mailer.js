@@ -69,7 +69,7 @@ export const sendEmail = async (toEmail, subject, html) => {
   //   secure: false,
   //   auth: {
   //     user: "afrikatribes@yahoo.com",
-  //     pass: "Afrika.tribes@2025",
+  //     pass: "DA",
   //   },
   // });
 
