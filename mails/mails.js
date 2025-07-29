@@ -28,7 +28,7 @@ export default async (options) => {
         
         // Compile the template with context
         const template = handlebars.compile(html);
-        options.context.logo = process.env.FRONTEND_URL + "/backend/assets/africatribes_logo.svg";
+        options.context.logo = process.env.FRONTEND_URL + "/backend/assets/logo.png";
         const htmlToSend = template(options.context);
 
         // Prepare the API payload
