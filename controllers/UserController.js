@@ -266,7 +266,7 @@ export const userResetPassword = async (req, res) => {
     user.password = pass;
 
     await user.save();
-    isExistToken.status = "Deactivated";
+    isExistToken.status = "Deactivate";
     await isExistToken.save();
 
     __.res(res, "Password reset successfully.", 200);
